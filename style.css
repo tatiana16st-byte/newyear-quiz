@@ -1,0 +1,176 @@
+/* public/style.css - Волшебный Фон и стили */
+
+/* 1. Общие настройки */
+body {
+    font-family: 'Arial', sans-serif; /* Оставим Arial, чтобы не было проблем с загрузкой шрифтов */
+    background: linear-gradient(135deg, #0f1c3a 0%, #3a0f3a 100%); /* Глубокий сине-фиолетовый градиент */
+    color: #e6e6fa; /* Светлый текст */
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow: hidden; 
+}
+
+/* 2. Контейнер викторины */
+.container {
+    background: rgba(0, 0, 0, 0.6); /* Полупрозрачный фон для содержимого */
+    padding: 30px 50px;
+    margin-top: 50px;
+    border-radius: 20px;
+    box-shadow: 0 0 40px rgba(138, 43, 226, 0.7); /* Сияющая фиолетовая тень */
+    max-width: 900px;
+    width: 90%;
+    text-align: center;
+    border: 3px solid #ffd700; /* Золотая рамка */
+}
+
+/* 3. Заголовки */
+h1 {
+    color: #ffd700; /* Золотой цвет */
+    font-size: 2.5em;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+    margin-bottom: 20px;
+}
+
+h2 {
+    color: #add8e6; /* Голубой цвет льда */
+    margin-top: 0;
+}
+
+/* 4. Общие стили для кнопок */
+button {
+    padding: 12px 25px;
+    font-size: 1.1em;
+    cursor: pointer;
+    border: none;
+    border-radius: 10px;
+    margin: 10px;
+    font-weight: bold;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+/* Стили кнопки в заголовке */
+#headerButton {
+    background: #8a2be2; /* Фиолетовый */
+    color: white;
+    box-shadow: 0 5px 15px rgba(138, 43, 226, 0.5);
+    margin: 20px 0;
+}
+
+#headerButton:hover:not(:disabled) {
+    background: #6a1ba3; 
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(138, 43, 226, 0.8);
+}
+
+/* Стили для кнопок категорий */
+.category-button {
+    background-color: #3498db; /* Синий */
+    color: white;
+    width: 300px;
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.5);
+}
+
+.category-button:hover:not(:disabled) {
+    background-color: #2980b9;
+}
+
+/* Стили для кнопок ответов */
+.answer-option {
+    background-color: #f0f8ff; /* Бледно-голубой */
+    color: #2c3e50;
+    border: 2px solid #add8e6; /* Голубая рамка */
+    width: 45%; 
+    box-shadow: 0 2px 10px rgba(173, 216, 230, 0.5);
+    display: inline-block;
+}
+
+.answer-option:hover:not(:disabled) {
+    background-color: #add8e6;
+}
+
+/* Правильный ответ */
+.answer-option.correct {
+    background-color: #2ecc71; /* Изумрудный */
+    color: white;
+    box-shadow: 0 5px 20px rgba(46, 204, 113, 0.8);
+}
+
+.answer-option:disabled {
+    cursor: default;
+    opacity: 0.7;
+}
+
+.correct-answer-display {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #d1e7dd;
+    color: #0f5132;
+    border: 1px solid #badbcc;
+    border-radius: 5px;
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+/* Стили для вопросов и информации */
+.question-text {
+    font-size: 1.8em;
+    margin: 20px 0;
+    color: #fff;
+    font-weight: 300;
+}
+
+.question-info {
+    font-size: 1.1em;
+    color: #ffd700;
+}
+
+/* Анимация "Снег/Звезды" */
+
+body::before, body::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+}
+
+body::before {
+    background: radial-gradient(circle at 10% 50%, rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+                radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.8) 1.5px, transparent 1.5px),
+                radial-gradient(circle at 40% 20%, rgba(255, 255, 255, 0.8) 1px, transparent 1px);
+    background-size: 50px 50px, 80px 80px, 60px 60px;
+    animation: stars-move 120s linear infinite;
+}
+
+body::after {
+    background: radial-gradient(circle at 80% 30%, rgba(255, 255, 255, 0.9) 2px, transparent 2px),
+                radial-gradient(circle at 20% 70%, rgba(255, 255, 255, 0.9) 2.5px, transparent 2.5px);
+    background-size: 100px 100px, 150px 150px;
+    animation: stars-move-slow 180s linear infinite;
+}
+
+@keyframes stars-move {
+    from {
+        background-position: 0 0;
+    }
+    to {
+        background-position: 100% 100%;
+    }
+}
+
+@keyframes stars-move-slow {
+    from {
+        background-position: 0 0;
+    }
+    to {
+        background-position: -50% -50%;
+    }
+}
