@@ -9,7 +9,6 @@ const io = new Server(server);
 
 /* ================= PORT ================= */
 
-// ⚠️ ВАЖНО: Railway / Heroku / Render
 const PORT = process.env.PORT || 3000;
 
 /* ================= STATIC ================= */
@@ -20,17 +19,32 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'client.html'));
 });
 
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
+/* ================= GAME STATE ================= */
+
+let players = [];
 
 /* ================= SOCKET ================= */
 
 io.on('connection', (socket) => {
-  console.log('🔌 Подключился клиент:', socket.id);
+  console.log('🔌 Подключился:', socket.id);
+
+  socket.on('register_player', (data) => {
+    const player = {
+      id: socket.id,
+      mode: data.mode,
+      avatar: data.avatar
+    };
+
+    players.push(player);
+    console.log('➕ Игрок добавлен:', player);
+
+    io.emit('lobby_update', players);
+  });
 
   socket.on('disconnect', () => {
-    console.log('❌ Отключился клиент:', socket.id);
+    players = players.filter(p => p.id !== socket.id);
+    console.log('❌ Отключился:', socket.id);
+    io.emit('lobby_update', players);
   });
 });
 
