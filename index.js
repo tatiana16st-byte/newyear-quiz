@@ -5,13 +5,21 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+
+/* ================= SOCKET.IO (CORS) ================= */
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 
 /* ================= PORT ================= */
 
 const PORT = process.env.PORT || 3000;
 
-/* ================= STATIC ================= */
+/* ================= STATIC FILES ================= */
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -23,7 +31,7 @@ app.get('/', (req, res) => {
 
 let players = [];
 
-/* ================= SOCKET ================= */
+/* ================= SOCKET EVENTS ================= */
 
 io.on('connection', (socket) => {
   console.log('🔌 Подключился:', socket.id);
@@ -31,7 +39,7 @@ io.on('connection', (socket) => {
   socket.on('register_player', (data) => {
     const player = {
       id: socket.id,
-      mode: data.mode,
+      mode: data.mode,      // solo / team
       avatar: data.avatar
     };
 
@@ -44,11 +52,12 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     players = players.filter(p => p.id !== socket.id);
     console.log('❌ Отключился:', socket.id);
+
     io.emit('lobby_update', players);
   });
 });
 
-/* ================= START ================= */
+/* ================= START SERVER ================= */
 
 server.listen(PORT, () => {
   console.log(`🚀 Сервер запущен на порту ${PORT}`);
