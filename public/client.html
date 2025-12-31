@@ -1,142 +1,45 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Новогодняя викторина</title>
-
-  <style>
-    body {
-      font-family: Arial;
-      background: #0b1d33;
-      color: white;
-      text-align: center;
-      padding: 20px;
-    }
-
-    .hidden { display: none; }
-
-    .avatars {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 15px;
-      max-width: 420px;
-      margin: 20px auto;
-    }
-
-    .avatar {
-      border: 3px solid transparent;
-      border-radius: 12px;
-      cursor: pointer;
-    }
-
-    .avatar.selected {
-      border-color: gold;
-    }
-
-    button {
-      padding: 12px 20px;
-      margin: 10px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-  </style>
+  <link rel="stylesheet" href="/style.css" />
 </head>
-
 <body>
 
 <h1>🎄 Новогодняя викторина</h1>
 
+<!-- ВЫБОР РЕЖИМА -->
 <div id="mode-screen">
-  <p>Выберите режим</p>
-  <button onclick="selectMode('solo')">👤 Соло</button>
+  <button onclick="selectMode('solo')">🎮 Соло</button>
   <button onclick="selectMode('team')">👥 Команда</button>
 </div>
 
-<div id="avatar-screen" class="hidden">
-  <p>Выберите аватар</p>
-  <div id="avatars" class="avatars"></div>
+<!-- ВЫБОР АВАТАРА -->
+<div id="avatar-screen" style="display:none">
+  <h2>Выберите аватар</h2>
+  <div id="avatars"></div>
+  <button onclick="goToName()">Далее</button>
 </div>
 
-<div id="lobby-screen" class="hidden">
-  <h2>👥 Лобби</h2>
-  <ul id="players-list"></ul>
+<!-- ВВОД ИМЕНИ / КОМАНДЫ -->
+<div id="name-screen" style="display:none">
+  <h2 id="name-title"></h2>
+
+  <input id="playerName" placeholder="Ваше имя" />
+
+  <input id="teamName" placeholder="Название команды" style="display:none" />
+
+  <button onclick="register()">Войти в игру</button>
+</div>
+
+<!-- ЛОББИ -->
+<div id="lobby-screen" style="display:none">
+  <h2>Лобби</h2>
+  <ul id="players"></ul>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script>
-  const socket = io();
-
-  let selectedMode = null;
-  let selectedAvatar = null;
-
-  const soloAvatars = [
-    '/images/avatars/solo/avatar1.png',
-    '/images/avatars/solo/avatar2.png',
-    '/images/avatars/solo/avatar3.png',
-    '/images/avatars/solo/avatar4.png',
-    '/images/avatars/solo/avatar5.png',
-    '/images/avatars/solo/avatar6.png',
-    '/images/avatars/solo/avatar7.png',
-    '/images/avatars/solo/avatar8.png'
-  ];
-
-  const teamAvatars = [
-    '/images/avatars/teams/team1.png',
-    '/images/avatars/teams/team2.png',
-    '/images/avatars/teams/team3.png',
-    '/images/avatars/teams/team4.png'
-  ];
-
-  function selectMode(mode) {
-    selectedMode = mode;
-    document.getElementById('mode-screen').classList.add('hidden');
-    document.getElementById('avatar-screen').classList.remove('hidden');
-
-    const avatars = mode === 'solo' ? soloAvatars : teamAvatars;
-    const container = document.getElementById('avatars');
-    container.innerHTML = '';
-
-    avatars.forEach(src => {
-      const div = document.createElement('div');
-      div.className = 'avatar';
-      div.innerHTML = `<img src="${src}" width="100%">`;
-      div.onclick = () => selectAvatar(src, div);
-      container.appendChild(div);
-    });
-  }
-
-  function selectAvatar(src, el) {
-    document.querySelectorAll('.avatar').forEach(a => a.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedAvatar = src;
-
-    socket.emit('register_player', {
-      mode: selectedMode,
-      avatar: selectedAvatar
-    });
-
-    document.getElementById('avatar-screen').classList.add('hidden');
-    document.getElementById('lobby-screen').classList.remove('hidden');
-  }
-
-  socket.on('lobby_update', (players) => {
-    const list = document.getElementById('players-list');
-    list.innerHTML = '';
-
-    players.forEach(p => {
-      const li = document.createElement('li');
-      li.innerHTML = `${p.mode === 'team' ? '👥' : '👤'} <img src="${p.avatar}" width="30">`;
-      list.appendChild(li);
-    });
-  });
-</script>
-
+<script src="/client.js"></script>
 </body>
 </html>
