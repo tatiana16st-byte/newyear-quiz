@@ -1,40 +1,69 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <title>Админ — Викторина</title>
-</head>
-<body>
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const path = require('path');
 
-<h1>🎤 АДМИН ПАНЕЛЬ</h1>
+const app = express();
+const server = http.createServer(app);
 
-<button onclick="start()">▶️ СТАРТ ИГРЫ</button>
-<button onclick="end()">⛔️ ЗАВЕРШИТЬ</button>
-
-<h3>Состояние:</h3>
-<pre id="state">Ожидание игроков...</pre>
-
-<script src="/socket.io/socket.io.js"></script>
-<script>
-  const socket = io();
-  const state = document.getElementById('state');
-
-  function start() {
-    socket.emit('start_game');
-    state.textContent = 'Игра запущена';
+// ✅ CORS для телефонов и Render
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
   }
+});
 
-  function end() {
-    socket.emit('end_game');
-    state.textContent = 'Игра завершена';
-  }
+const PORT = process.env.PORT || 3000;
 
-  socket.on('lobby_update', (players) => {
-    state.textContent =
-      'Игроков: ' + players.length + '\n' +
-      players.map(p => p.name).join('\n');
+/* ================= STATIC ================= */
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'client.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+/* ================= GAME STATE ================= */
+
+let players = [];
+let gameStarted = false;
+
+/* ================= SOCKET ================= */
+
+io.on('connection', (socket) => {
+  console.log('🔌 Подключился:', socket.id);
+
+  socket.on('register_player', (data) => {
+    if (players.length >= 8) return;
+
+    const player = {
+      id: socket.id,
+      name: data.name,
+      avatar: data.avatar
+    };
+
+    players.push(player);
+    io.emit('lobby_update', players);
   });
-</script>
 
-</body>
-</html>
+  socket.on('start_game', () => {
+    gameStarted = true;
+    io.emit('game_started');
+  });
+
+  socket.on('disconnect', () => {
+    players = players.filter(p => p.id !== socket.id);
+    io.emit('lobby_update', players);
+  });
+});
+
+/* ================= START ================= */
+
+server.listen(PORT, () => {
+  console.log(🚀 Сервер запущен на порту ${PORT});
+});
