@@ -6,7 +6,6 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 
-// ================= CORS =================
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -16,7 +15,8 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-// ================= STATIC =================
+/* ===== STATIC ===== */
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
@@ -27,13 +27,15 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// ================= GAME STATE =================
+/* ===== GAME STATE ===== */
+
 let players = [];
 let gameStarted = false;
 
-// ================= SOCKET =================
+/* ===== SOCKET ===== */
+
 io.on('connection', (socket) => {
-  console.log('Подключился:', socket.id);
+  console.log('Client connected:', socket.id);
 
   socket.on('register_player', (data) => {
     if (gameStarted) return;
@@ -59,7 +61,8 @@ io.on('connection', (socket) => {
   });
 });
 
-// ================= START =================
+/* ===== START ===== */
+
 server.listen(PORT, () => {
-  console.log(Сервер запущен на порту ${PORT});
+  console.log('Server started on port ' + PORT);
 });
