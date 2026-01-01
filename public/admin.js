@@ -8,9 +8,9 @@ startBtn.onclick = () => {
 };
 
 socket.on('lobby_update', (players) => {
-  state.textContent = players
-    .map((p, i) => ${i + 1}. ${p.name})
-    .join('\n');
+  state.textContent =
+    'Игроков: ' + players.length + '\n' +
+    players.map(p => p.name).join('\n');
 });
 
 socket.on('game_started', () => {
