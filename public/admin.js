@@ -1,14 +1,18 @@
 const socket = io();
 
-socket.on("game_state", state => {
-  document.getElementById("state").innerText =
-    JSON.stringify(state, null, 2);
+const state = document.getElementById('state');
+const startBtn = document.getElementById('startBtn');
+
+startBtn.onclick = () => {
+  socket.emit('start_game');
+};
+
+socket.on('lobby_update', (players) => {
+  state.textContent = players
+    .map((p, i) => ${i + 1}. ${p.name})
+    .join('\n');
 });
 
-function start() {
-  socket.emit("admin_start");
-}
-
-function end() {
-  socket.emit("admin_end");
-}
+socket.on('game_started', () => {
+  state.textContent += '\n\n▶️ Игра запущена';
+});
