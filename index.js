@@ -15,7 +15,7 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-/* ===== STATIC ===== */
+/* ================= STATIC ================= */
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -27,26 +27,25 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-/* ===== GAME STATE ===== */
+/* ================= GAME STATE ================= */
 
 let players = [];
 let gameStarted = false;
 
-/* ===== SOCKET ===== */
+/* ================= SOCKET ================= */
 
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+  console.log('Connected:', socket.id);
 
   socket.on('register_player', (data) => {
     if (gameStarted) return;
 
-    const player = {
+    players.push({
       id: socket.id,
       name: data.name,
       avatar: data.avatar
-    };
+    });
 
-    players.push(player);
     io.emit('lobby_update', players);
   });
 
@@ -55,14 +54,9 @@ io.on('connection', (socket) => {
     io.emit('game_started');
   });
 
-  socket.on('disconnect', () => {
-    players = players.filter(p => p.id !== socket.id);
-    io.emit('lobby_update', players);
+  // 👉 НОВОЕ
+  socket.on('show_question', () => {
+    io.emit('question', {
+      text: '🎄 Какой фильм традиционно смотрят на Новый год в России?'
+    });
   });
-});
-
-/* ===== START ===== */
-
-server.listen(PORT, () => {
-  console.log('Server started on port ' + PORT);
-});
