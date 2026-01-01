@@ -2,44 +2,179 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Новогодняя викторина</title>
-  <link rel="stylesheet" href="/style.css" />
+  <title>🎄 Новогодняя викторина — Соло</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #0b1d3a, #123);
+      color: #fff;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 20px;
+    }
+
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 12px 0;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      font-size: 18px;
+      background: #ffcc00;
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    button:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+
+    .avatars {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .avatar {
+      border: 3px solid transparent;
+      border-radius: 12px;
+      padding: 6px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .avatar img {
+      width: 100%;
+      border-radius: 10px;
+    }
+
+    .avatar.selected {
+      border-color: #ffcc00;
+      background: rgba(255,204,0,0.2);
+    }
+
+    .status {
+      margin-top: 20px;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+  </style>
 </head>
 <body>
 
-<h1>🎄 Новогодняя викторина</h1>
+  <h1>🎄 Новогодняя викторина</h1>
+  <p>Соло-режим (до 8 игроков)</p>
 
-<!-- ВЫБОР РЕЖИМА -->
-<div id="mode-screen">
-  <button onclick="selectMode('solo')">🎮 Соло</button>
-  <button onclick="selectMode('team')">👥 Команда</button>
-</div>
+  <div class="container">
 
-<!-- ВЫБОР АВАТАРА -->
-<div id="avatar-screen" style="display:none">
-  <h2>Выберите аватар</h2>
-  <div id="avatars"></div>
-  <button onclick="goToName()">Далее</button>
-</div>
+    <input
+      type="text"
+      id="playerName"
+      placeholder="Введите ваше имя"
+      maxlength="20"
+    />
 
-<!-- ВВОД ИМЕНИ / КОМАНДЫ -->
-<div id="name-screen" style="display:none">
-  <h2 id="name-title"></h2>
+    <div class="avatars" id="avatars"></div>
 
-  <input id="playerName" placeholder="Ваше имя" />
+    <button id="joinBtn" disabled>
+      Войти в игру
+    </button>
 
-  <input id="teamName" placeholder="Название команды" style="display:none" />
+    <div class="status" id="status"></div>
 
-  <button onclick="register()">Войти в игру</button>
-</div>
+  </div>
 
-<!-- ЛОББИ -->
-<div id="lobby-screen" style="display:none">
-  <h2>Лобби</h2>
-  <ul id="players"></ul>
-</div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="/client.js"></script>
+    const avatars = [
+      'avatar1.png',
+      'avatar2.png',
+      'avatar3.png',
+      'avatar4.png',
+      'avatar5.png',
+      'avatar6.png',
+      'avatar7.png',
+      'avatar8.png'
+    ];
+
+    const avatarsContainer = document.getElementById('avatars');
+    const joinBtn = document.getElementById('joinBtn');
+    const nameInput = document.getElementById('playerName');
+    const status = document.getElementById('status');
+
+    let selectedAvatar = null;
+
+    // рендер аватаров
+    avatars.forEach((file) => {
+      const div = document.createElement('div');
+      div.className = 'avatar';
+
+      const img = document.createElement('img');
+      img.src = `/images/avatars/solo/${file}`;
+      img.alt = file;
+
+      div.appendChild(img);
+      avatarsContainer.appendChild(div);
+
+      div.addEventListener('click', () => {
+        document.querySelectorAll('.avatar')
+          .forEach(a => a.classList.remove('selected'));
+
+        div.classList.add('selected');
+        selectedAvatar = file;
+        checkReady();
+      });
+    });
+
+    nameInput.addEventListener('input', checkReady);
+
+    function checkReady() {
+      joinBtn.disabled = !(
+        nameInput.value.trim().length > 0 &&
+        selectedAvatar
+      );
+    }
+
+    joinBtn.addEventListener('click', () => {
+      socket.emit('register_player', {
+        mode: 'solo',
+        name: nameInput.value.trim(),
+        avatar: selectedAvatar
+      });
+
+      joinBtn.disabled = true;
+      status.innerText = '⏳ Ожидание начала игры...';
+    });
+
+    socket.on('connect', () => {
+      console.log('Подключено к серверу');
+    });
+  </script>
+
 </body>
 </html>
