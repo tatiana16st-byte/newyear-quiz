@@ -6,10 +6,15 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: "*" }
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
 });
 
 const PORT = process.env.PORT || 3000;
+
+/* ================= STATIC ================= */
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -17,26 +22,38 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'client.html'));
 });
 
+app.get('/host', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'host.html'));
+});
+
 /* ================= GAME STATE ================= */
 
 let players = [];
+let gameStarted = false;
 
 /* ================= SOCKET ================= */
 
-io.on('connection', socket => {
+io.on('connection', (socket) => {
   console.log('🔌 Подключился:', socket.id);
 
-  socket.on('register_player', data => {
+  socket.on('register_player', (data) => {
+    if (players.length >= 8 || gameStarted) return;
+
     const player = {
       id: socket.id,
-      mode: data.mode,
-      avatar: data.avatar,
-      playerName: data.playerName,
-      teamName: data.teamName || null
+      name: data.name,
+      avatar: data.avatar
     };
 
     players.push(player);
+
     io.emit('lobby_update', players);
+  });
+
+  socket.on('start_game', () => {
+    gameStarted = true;
+    io.emit('game_started');
+    console.log('🎬 Игра началась');
   });
 
   socket.on('disconnect', () => {
@@ -45,6 +62,8 @@ io.on('connection', socket => {
   });
 });
 
+/* ================= START ================= */
+
 server.listen(PORT, () => {
-  console.log(`🚀 Сервер запущен на порту ${PORT}`);
+  console.log(🚀 Сервер запущен на порту ${PORT});
 });
