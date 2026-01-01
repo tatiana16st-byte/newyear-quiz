@@ -1,54 +1,123 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Викторина — игрок</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>Новогодняя викторина</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #0b1c2d;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    input {
+      padding: 10px;
+      font-size: 16px;
+      width: 80%;
+      max-width: 300px;
+      margin-bottom: 20px;
+    }
+
+    .avatars {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      max-width: 320px;
+      margin: 0 auto 20px;
+    }
+
+    .avatar {
+      border: 2px solid transparent;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .avatar.selected {
+      border-color: #00ffcc;
+    }
+
+    .avatar img {
+      width: 100%;
+      display: block;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #00ffcc;
+      border: none;
+      border-radius: 8px;
+    }
+
+    #game {
+      margin-top: 40px;
+    }
+  </style>
 </head>
 <body>
 
-<h2>🎮 Вход в игру</h2>
+<div id="lobby">
+  <h1>🎄 Новогодняя викторина</h1>
 
-<div id="join">
-  <input id="name" placeholder="Введите имя" />
-  <br><br>
+  <p>Введите имя</p>
+  <input id="name" placeholder="Ваше имя" />
 
-  <p>Выберите аватар:</p>
-  <div id="avatars">
-    <img src="/images/avatars/solo/avatar1.png" width="80" onclick="selectAvatar(this)">
-    <img src="/images/avatars/solo/avatar2.png" width="80" onclick="selectAvatar(this)">
-    <img src="/images/avatars/solo/avatar3.png" width="80" onclick="selectAvatar(this)">
-  </div>
+  <p>Выберите аватар</p>
+  <div class="avatars" id="avatars"></div>
 
-  <br>
-  <button onclick="joinGame()">Войти в игру</button>
-</div>
-
-<div id="waiting" style="display:none;">
-  <h2>⏳ Ожидание начала игры...</h2>
+  <button onclick="join()">Войти в игру</button>
 </div>
 
 <div id="game" style="display:none;">
-  <h1>🎉 ИГРА НАЧАЛАСЬ</h1>
-  <p>Ожидайте первый вопрос</p>
+  <h2>⏳ Ожидание начала игры...</h2>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
   const socket = io();
 
+  const avatarsContainer = document.getElementById('avatars');
   let selectedAvatar = null;
 
-  function selectAvatar(img) {
-    document.querySelectorAll('#avatars img').forEach(i => {
-      i.style.border = 'none';
-    });
-    img.style.border = '3px solid green';
-    selectedAvatar = img.src;
-  }
+  // 8 аватаров соло
+  const avatars = [
+    'avatars/solo/1.png',
+    'avatars/solo/2.png',
+    'avatars/solo/3.png',
+    'avatars/solo/4.png',
+    'avatars/solo/5.png',
+    'avatars/solo/6.png',
+    'avatars/solo/7.png',
+    'avatars/solo/8.png'
+  ];
 
-  function joinGame() {
+  avatars.forEach(src => {
+    const div = document.createElement('div');
+    div.className = 'avatar';
+    div.innerHTML = <img src="/images/${src}">;
+
+    div.onclick = () => {
+      document.querySelectorAll('.avatar').forEach(a => a.classList.remove('selected'));
+      div.classList.add('selected');
+      selectedAvatar = src;
+    };
+
+    avatarsContainer.appendChild(div);
+  });
+
+  function join() {
     const name = document.getElementById('name').value.trim();
+
     if (!name || !selectedAvatar) {
       alert('Введите имя и выберите аватар');
       return;
@@ -59,21 +128,24 @@
       avatar: selectedAvatar
     });
 
-    document.getElementById('join').style.display = 'none';
-    document.getElementById('waiting').style.display = 'block';
+    document.getElementById('lobby').style.display = 'none';
+    document.getElementById('game').style.display = 'block';
+    document.getElementById('game').innerHTML =
+      '<h2>⏳ Ожидание начала игры...</h2>';
   }
 
   socket.on('game_started', () => {
-    document.getElementById('waiting').style.display = 'none';
-    document.getElementById('game').style.display = 'block';
+    document.getElementById('game').innerHTML =
+      '<h2>🎉 Игра началась! Ожидайте первый вопрос</h2>';
+  });
+
+  socket.on('question', data => {
+    document.getElementById('game').innerHTML = 
+      <h1>${data.text}</h1>
+      <p>Ответьте мысленно 😉</p>
+    ;
   });
 </script>
 
-  socket.on('question', data => {
-  document.getElementById('game').innerHTML = 
-    <h1>${data.text}</h1>
-    <p>Ответьте мысленно 😉</p>
-  ;
-});
 </body>
 </html>
