@@ -69,5 +69,11 @@
   });
 </script>
 
+  socket.on('question', data => {
+  document.getElementById('game').innerHTML = 
+    <h1>${data.text}</h1>
+    <p>Ответьте мысленно 😉</p>
+  ;
+});
 </body>
 </html>
