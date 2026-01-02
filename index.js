@@ -6,6 +6,7 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 
+// Socket.IO с CORS (для телефонов и Render)
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -35,17 +36,18 @@ let gameStarted = false;
 /* ================= SOCKET ================= */
 
 io.on('connection', (socket) => {
-  console.log('Connected:', socket.id);
+  console.log('Client connected:', socket.id);
 
   socket.on('register_player', (data) => {
     if (gameStarted) return;
 
-    players.push({
+    const player = {
       id: socket.id,
       name: data.name,
       avatar: data.avatar
-    });
+    };
 
+    players.push(player);
     io.emit('lobby_update', players);
   });
 
@@ -54,9 +56,14 @@ io.on('connection', (socket) => {
     io.emit('game_started');
   });
 
-  // 👉 НОВОЕ
-  socket.on('show_question', () => {
-    io.emit('question', {
-      text: '🎄 Какой фильм традиционно смотрят на Новый год в России?'
-    });
+  socket.on('disconnect', () => {
+    players = players.filter(p => p.id !== socket.id);
+    io.emit('lobby_update', players);
   });
+});
+
+/* ================= START ================= */
+
+server.listen(PORT, () => {
+  console.log('Server started on port ' + PORT);
+});
