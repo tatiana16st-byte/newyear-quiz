@@ -1,10 +1,10 @@
 let movies, fatherfrost, traditions, tree;
 
 try {
-  movies = require('movies');
-  fatherfrost = require('fatherfrost');
-  traditions = require('traditions');
-  tree = require('tree');
+  movies = require('./movies');
+  fatherfrost = require('./fatherfrost');
+  traditions = require('./traditions');
+  tree = require('./tree');
 } catch (e) {
   console.error("ОШИБКА ЗАГРУЗКИ ФАЙЛОВ ВОПРОСОВ. Проверьте пути в require().");
   console.error("Текущая ошибка:", e.message);
