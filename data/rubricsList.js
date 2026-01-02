@@ -9,16 +9,19 @@ const path = require('path');
 let movies, fatherfrost, traditions, tree;
 
 try {
-  // Мы находимся в src/data/. Чтобы попасть в /data/ в корне, 
-  // нужно подняться на два уровня вверх.
-  // Используем path.join для надежности на разных ОС
-  movies = require(path.join(__dirname, '../../data/rubrics/movies'));
-  fatherfrost = require(path.join(__dirname, '../../data/rubrics/fatherfrost'));
-  traditions = require(path.join(__dirname, '../../data/rubrics/traditions'));
-  tree = require(path.join(__dirname, '../../data/rubrics/tree'));
+  /**
+   * Разбор путей:
+   * __dirname — это /opt/render/project/src/data/
+   * '..' — это /opt/render/project/src/
+   * '../..' — это /opt/render/project/ (корень проекта)
+   */
+  movies = require(path.join(__dirname, '../../../data/rubrics/movies'));
+  fatherfrost = require(path.join(__dirname, '../../../data/rubrics/fatherfrost'));
+  traditions = require(path.join(__dirname, '../../../data/rubrics/traditions'));
+  tree = require(path.join(__dirname, '../../../data/rubrics/tree'));
 } catch (e) {
   console.error("!!! КРИТИЧЕСКАЯ ОШИБКА: Модули не найдены по пути /data/rubrics/");
-  console.error("Попытка загрузки через относительный путь ../../data/rubrics/");
+  console.error("Попытка загрузки через относительный путь ../../../data/rubrics/");
   console.error("Ошибка:", e.message);
   throw e;
 }
