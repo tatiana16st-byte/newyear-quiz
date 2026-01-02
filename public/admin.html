@@ -8,43 +8,43 @@
 
 <h2>Админ панель</h2>
 
-<button id="startGame">Старт игры</button>
+<button id="startBtn">Старт игры</button>
 
 <h3>Рубрики</h3>
 <div id="rubrics"></div>
 
-<p id="status">Ожидание игроков...</p>
+<h3>Игроки</h3>
+<pre id="players">Ожидание игроков...</pre>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io();
 
-const rubricsDiv = document.getElementById('rubrics');
-const status = document.getElementById('status');
+const playersBlock = document.getElementById('players');
+const rubricsBlock = document.getElementById('rubrics');
+const startBtn = document.getElementById('startBtn');
 
-document.getElementById('startGame').onclick = () => {
+startBtn.onclick = () => {
   socket.emit('start_game');
 };
 
-socket.on('game_started', () => {
-  status.textContent = 'Игра запущена';
+socket.on('lobby_update', (players) => {
+  playersBlock.textContent =
+    'Игроков: ' + players.length + '\n' +
+    players.map((p, i) => (i + 1) + '. ' + p.name).join('\n');
 });
 
 socket.on('rubrics_list', (rubrics) => {
-  rubricsDiv.innerHTML = '';
+  rubricsBlock.innerHTML = '';
 
-  rubrics.forEach(rubric => {
+  rubrics.forEach(r => {
     const btn = document.createElement('button');
-    btn.textContent = rubric.title;
+    btn.textContent = r.title;
     btn.onclick = () => {
-      socket.emit('select_rubric', rubric.id);
+      socket.emit('select_rubric', r.id);
     };
-    rubricsDiv.appendChild(btn);
+    rubricsBlock.appendChild(btn);
   });
-});
-
-socket.on('rubric_selected', (data) => {
-  status.textContent = 'Выбрана рубрика: ' + data.title;
 });
 </script>
 
