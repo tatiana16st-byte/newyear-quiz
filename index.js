@@ -5,100 +5,93 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
+
 const io = new Server(server, {
-  cors: { origin: '*', methods: ['GET', 'POST'] }
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
 });
 
-app.use(express.static('public'));
+const PORT = process.env.PORT || 3000;
 
-/* ================= RUBRICS ================= */
+/* ================= STATIC ================= */
 
-const movies = require('./data/rubrics/movies');
-const fatherfrost = require('./data/rubrics/fatherfrost');
-const traditions = require('./data/rubrics/traditions');
-const tree = require('./data/rubrics/tree');
+app.use(express.static(path.join(__dirname, 'public')));
 
-const rubrics = { movies, fatherfrost, traditions, tree };
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'client.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+/* ================= DATA ================= */
+
+const rubricsList = require('./data/rubricsList');
 
 /* ================= GAME STATE ================= */
 
 let players = [];
-let currentRubric = null;
-let currentQuestionIndex = 0;
-let answers = {};
+let gameStarted = false;
+
+let currentGame = {
+  rubricId: null,
+  rubricTitle: '',
+  questions: [],
+  currentQuestionIndex: 0
+};
 
 /* ================= SOCKET ================= */
 
 io.on('connection', (socket) => {
 
-  socket.on('join_game', ({ name, avatar }) => {
-    players.push({
-      id: socket.id,
-      name,
-      avatar,
-      score: 0
-    });
-    io.emit('players_update', players);
-  });
+  // отправляем список рубрик админу
+  socket.emit('rubrics_list', rubricsList);
 
-  socket.on('select_rubric', (key) => {
-    currentRubric = rubrics[key];
-    currentQuestionIndex = 0;
-    io.emit('rubric_selected', currentRubric.rubricTitle);
+  socket.on('register_player', (data) => {
+    if (gameStarted) return;
+
+    const player = {
+      id: socket.id,
+      name: data.name,
+      avatar: data.avatar
+    };
+
+    players.push(player);
+    io.emit('lobby_update', players);
   });
 
   socket.on('start_game', () => {
-    sendQuestion();
+    gameStarted = true;
+    io.emit('game_started');
   });
 
-  socket.on('submit_answer', (answer) => {
-    if (answers[socket.id]) return; // защита от повторного ответа
+  socket.on('select_rubric', (rubricId) => {
+    const rubric = rubricsList.find(r => r.id === rubricId);
+    if (!rubric) return;
 
-    answers[socket.id] = answer;
+    const rubricData = require(rubric.file);
 
-    const q = currentRubric.questions[currentQuestionIndex];
-    const correct = q.correctAnswer === answer;
+    currentGame.rubricId = rubric.id;
+    currentGame.rubricTitle = rubric.title;
+    currentGame.questions = rubricData.questions;
+    currentGame.currentQuestionIndex = 0;
 
-    if (correct) {
-      const player = players.find(p => p.id === socket.id);
-      if (player) player.score += 1;
-    }
-
-    socket.emit('answer_result', {
-      correct,
-      correctAnswer: q.correctAnswer,
-      correctText: q.correctText
+    io.emit('rubric_selected', {
+      title: rubric.title
     });
-  });
-
-  socket.on('next_question', () => {
-    currentQuestionIndex++;
-    if (currentQuestionIndex >= currentRubric.questions.length) {
-      io.emit('game_finished', players);
-      return;
-    }
-    sendQuestion();
   });
 
   socket.on('disconnect', () => {
     players = players.filter(p => p.id !== socket.id);
-    io.emit('players_update', players);
+    io.emit('lobby_update', players);
   });
-
-  function sendQuestion() {
-    answers = {};
-    const q = currentRubric.questions[currentQuestionIndex];
-
-    io.emit('new_question', {
-      rubricTitle: currentRubric.rubricTitle,
-      question: q.question,
-      options: q.options,
-      imagePath: q.imagePath
-    });
-  }
 });
 
 /* ================= START ================= */
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log('Server started on', PORT));
+server.listen(PORT, () => {
+  console.log('Server started on port ' + PORT);
+});
