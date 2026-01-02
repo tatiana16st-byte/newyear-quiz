@@ -1,6 +1,6 @@
 module.exports = {
-  "rubricId": 3, // Заменил categoryId на rubricId, чтобы соответствовать формату
-  "rubricTitle": "Традиции на Новый год", // Заменил categoryTitle на rubricTitle
+  "rubricId": 3, 
+  "rubricTitle": "Традиции на Новый год",
   "questions": [
     {
       "id": 1,
