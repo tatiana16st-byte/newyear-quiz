@@ -1,5 +1,5 @@
 module.exports = {
-  "rubricId": 2,
+  "rubricId": tree,
   "rubricTitle": "ЁЛКА",
   "questions": [
     {
