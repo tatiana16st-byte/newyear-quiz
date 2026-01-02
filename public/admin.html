@@ -1,52 +1,50 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Админ панель</title>
+<meta charset="UTF-8">
+<title>Admin Panel</title>
+<style>
+body { font-family: Arial; text-align:center; }
+button { margin:5px; padding:8px 15px; }
+.rubrics button { margin:5px; }
+</style>
 </head>
 <body>
 
-<h2>Админ панель</h2>
+<h2>🎅 Панель администратора</h2>
 
-<button id="startBtn">Старт игры</button>
-
-<h3>Рубрики</h3>
-<div id="rubrics"></div>
-
-<h3>Игроки</h3>
-<pre id="players">Ожидание игроков...</pre>
+<div class="rubrics" id="rubrics"></div>
+<div><button onclick="startGame()">Старт игры</button></div>
+<h3>Игроки:</h3>
+<pre id="players"></pre>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="/data/rubricsList.js"></script>
 <script>
 const socket = io();
+const rubricsDiv = document.getElementById('rubrics');
+const playersDiv = document.getElementById('players');
+let selectedRubricId = null;
 
-const playersBlock = document.getElementById('players');
-const rubricsBlock = document.getElementById('rubrics');
-const startBtn = document.getElementById('startBtn');
-
-startBtn.onclick = () => {
-  socket.emit('start_game');
-};
-
-socket.on('lobby_update', (players) => {
-  playersBlock.textContent =
-    'Игроков: ' + players.length + '\n' +
-    players.map((p, i) => (i + 1) + '. ' + p.name).join('\n');
+rubricsList.forEach(r=>{
+  const btn = document.createElement('button');
+  btn.textContent = r.rubricTitle;
+  btn.onclick = ()=> {
+    selectedRubricId = r.rubricId;
+    rubricsDiv.querySelectorAll('button').forEach(b=>b.style.background='');
+    btn.style.background = '#2ecc71';
+  };
+  rubricsDiv.appendChild(btn);
 });
 
-socket.on('rubrics_list', (rubrics) => {
-  rubricsBlock.innerHTML = '';
+function startGame() {
+  if (!selectedRubricId) { alert('Выберите рубрику'); return; }
+  socket.emit('start_game', selectedRubricId);
+}
 
-  rubrics.forEach(r => {
-    const btn = document.createElement('button');
-    btn.textContent = r.title;
-    btn.onclick = () => {
-      socket.emit('select_rubric', r.id);
-    };
-    rubricsBlock.appendChild(btn);
-  });
+socket.on('lobby_update', players=>{
+  playersDiv.textContent = players.map((p,i)=>`${i+1}. ${p.name} (${p.avatar})`).join('\n');
 });
 </script>
-
 </body>
 </html>
