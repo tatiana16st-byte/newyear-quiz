@@ -1,12 +1,16 @@
-/**
- * Главный файл конфигурации рубрик викторины.
- * Ссылается на отдельные файлы с вопросами.
- */
+let movies, fatherfrost, traditions, tree;
 
-const movies = require('./movies');
-const fatherfrost = require('./fatherfrost');
-const traditions = require('./traditions');
-const tree = require('./tree');
+try {
+  movies = require('./movies');
+  fatherfrost = require('./fatherfrost');
+  traditions = require('./traditions');
+  tree = require('./tree');
+} catch (e) {
+  console.error("ОШИБКА ЗАГРУЗКИ ФАЙЛОВ ВОПРОСОВ. Проверьте пути в require().");
+  console.error("Текущая ошибка:", e.message);
+  // Выбрасываем ошибку дальше, чтобы Render показал, какого именно файла не хватает
+  throw e;
+}
 
 module.exports = [
   {
