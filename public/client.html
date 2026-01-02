@@ -3,21 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <title>Новогодняя викторина</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    .avatars img {
+      width: 80px;
+      margin: 6px;
+      cursor: pointer;
+      border: 3px solid transparent;
+      border-radius: 10px;
+    }
+    .avatars img.selected {
+      border-color: #2ecc71;
+    }
+  </style>
 </head>
 <body>
 
-<h2 id="title">Новогодняя викторина</h2>
+<h2>🎄 Новогодняя викторина</h2>
 
 <div id="join">
   <input id="name" placeholder="Введите имя" />
-  <br><br>
 
-  <button onclick="selectAvatar('avatar 1')">Аватар 1</button>
-  <button onclick="selectAvatar('avatar 2')">Аватар 2</button>
-  <button onclick="selectAvatar('avatar 3')">Аватар 3</button>
+  <p>Выберите аватар:</p>
 
-  <br><br>
-  <button onclick="joinGame()">Войти в игру</button>
+  <div class="avatars" id="avatars"></div>
+
+  <br>
+  <button onclick="joinGame()">Начать игру</button>
 </div>
 
 <p id="status"></p>
@@ -26,38 +42,48 @@
 <script>
 const socket = io();
 
-let avatar = null;
-
+let selectedAvatar = null;
 const status = document.getElementById('status');
 const joinBlock = document.getElementById('join');
+const avatarsDiv = document.getElementById('avatars');
 
-function selectAvatar(a) {
-  avatar = a;
-  status.textContent = 'Выбран ' + a;
+/* ====== АВАТАРЫ 1–8 ====== */
+for (let i = 1; i <= 8; i++) {
+  const img = document.createElement('img');
+  img.src = `/images/avatars/solo/avatar${i}.png`;
+  img.onclick = () => selectAvatar(img, `avatar${i}`);
+  avatarsDiv.appendChild(img);
+}
+
+function selectAvatar(img, avatarName) {
+  document
+    .querySelectorAll('.avatars img')
+    .forEach(el => el.classList.remove('selected'));
+
+  img.classList.add('selected');
+  selectedAvatar = avatarName;
+  status.textContent = 'Выбран аватар: ' + avatarName;
 }
 
 function joinGame() {
-  const name = document.getElementById('name').value;
-  if (!name || !avatar) {
+  const name = document.getElementById('name').value.trim();
+
+  if (!name || !selectedAvatar) {
     alert('Введите имя и выберите аватар');
     return;
   }
 
   socket.emit('register_player', {
     name,
-    avatar
+    avatar: selectedAvatar
   });
 
   joinBlock.style.display = 'none';
-  status.textContent = 'Ожидание начала игры...';
+  status.textContent = '⏳ Ожидание начала игры...';
 }
 
 socket.on('game_started', () => {
-  status.textContent = 'Игра началась. Ожидайте первый вопрос.';
-});
-
-socket.on('rubric_selected', (data) => {
-  status.textContent = 'Выбрана рубрика: ' + data.title;
+  status.textContent = '🎉 Игра началась. Ожидайте первый вопрос.';
 });
 </script>
 
