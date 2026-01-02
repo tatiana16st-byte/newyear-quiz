@@ -1,98 +1,41 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>Новогодняя викторина</title>
+  <meta charset="UTF-8">
+  <title>Викторина</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      font-family: Arial;
       text-align: center;
-      background: #0b1c2d;
-      color: white;
     }
-    .avatars img {
-      width: 90px;
-      margin: 10px;
-      cursor: pointer;
-      border: 3px solid transparent;
-      border-radius: 12px;
+    button {
+      padding: 12px;
+      margin: 8px;
+      font-size: 18px;
+      width: 80%;
     }
-    .avatars img.selected {
-      border-color: gold;
-    }
-    #wait {
-      display: none;
-      margin-top: 30px;
-      font-size: 22px;
+    .correct { background: green; }
+    .wrong { background: crimson; }
+    img {
+      max-width: 90%;
+      margin: 10px 0;
     }
   </style>
 </head>
 <body>
 
-<h1>🎄 Новогодняя викторина</h1>
+<h2 id="rubric"></h2>
+<h3 id="question"></h3>
+<img id="image" hidden>
 
-<div id="join">
-  <input id="name" placeholder="Введите имя" />
-  <h3>Выберите аватар</h3>
+<div id="answers"></div>
 
-  <div class="avatars" id="avatars"></div>
-
-  <button onclick="join()">Войти в игру</button>
-</div>
-
-<div id="wait">
-  ⏳ Ожидание начала игры...
-</div>
+<p id="result"></p>
 
 <script src="/socket.io/socket.io.js"></script>
-<script>
-  const socket = io();
-  let selectedAvatar = null;
-
-  const avatars = [
-   'avatars/solo/avatar1.png',
-    'avatars/solo/avatar2.png',
-    'avatars/solo/avatar3.png',
-    'avatars/solo/avatar4.png',
-    'avatars/solo/avatar5.png',
-    'avatars/solo/avatar6.png',
-    'avatars/solo/avatar7.png',
-    'avatars/solo/avatar8.png'
-  ];
-
-  const avatarsDiv = document.getElementById('avatars');
-
-  avatars.forEach(src => {
-    const img = document.createElement('img');
-    img.src = src;
-    img.onclick = () => {
-      document.querySelectorAll('.avatars img').forEach(i => i.classList.remove('selected'));
-      img.classList.add('selected');
-      selectedAvatar = src;
-    };
-    avatarsDiv.appendChild(img);
-  });
-
-  function join() {
-    const name = document.getElementById('name').value.trim();
-    if (!name || !selectedAvatar) {
-      alert('Введите имя и выберите аватар');
-      return;
-    }
-
-    socket.emit('register_player', {
-      name,
-      avatar: selectedAvatar
-    });
-
-    document.getElementById('join').style.display = 'none';
-    document.getElementById('wait').style.display = 'block';
-  }
-
-  socket.on('game_started', () => {
-    document.getElementById('wait').innerText = '🎉 Игра началась! Ожидайте первый вопрос';
-  });
-</script>
+<script src="client.js"></script>
 
 </body>
 </html>
