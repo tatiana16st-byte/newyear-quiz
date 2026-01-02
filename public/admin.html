@@ -3,54 +3,50 @@
 <head>
   <meta charset="UTF-8">
   <title>Админ панель</title>
-  <style>
-    body {
-      font-family: Arial;
-      background: #111;
-      color: #fff;
-      padding: 20px;
-    }
-    button {
-      padding: 10px 15px;
-      margin: 5px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .rubrics button {
-      display: block;
-      width: 100%;
-      margin-bottom: 10px;
-    }
-    pre {
-      background: #222;
-      padding: 10px;
-    }
-  </style>
 </head>
 <body>
 
-<h1>Админ панель</h1>
+<h2>Админ панель</h2>
 
-<h2>Выбор рубрики</h2>
-<div class="rubrics">
-  <button onclick="selectRubric('movies')">🎬 Новогодние фильмы и мультфильмы</button>
-  <button onclick="selectRubric('fatherfrost')">🎅 Дед Мороз</button>
-  <button onclick="selectRubric('traditions')">🎄 Традиции</button>
-  <button onclick="selectRubric('tree')">🎁 Ёлка</button>
-</div>
+<button id="startGame">Старт игры</button>
 
-<h2>Управление</h2>
-<button onclick="startGame()">▶️ Старт игры</button>
-<button onclick="nextQuestion()">➡️ Следующий вопрос</button>
+<h3>Рубрики</h3>
+<div id="rubrics"></div>
 
-<h2>Состояние</h2>
-<p id="state">Ожидание...</p>
-
-<h2>Игроки</h2>
-<pre id="players"></pre>
+<p id="status">Ожидание игроков...</p>
 
 <script src="/socket.io/socket.io.js"></script>
-<script src="admin.js"></script>
+<script>
+const socket = io();
+
+const rubricsDiv = document.getElementById('rubrics');
+const status = document.getElementById('status');
+
+document.getElementById('startGame').onclick = () => {
+  socket.emit('start_game');
+};
+
+socket.on('game_started', () => {
+  status.textContent = 'Игра запущена';
+});
+
+socket.on('rubrics_list', (rubrics) => {
+  rubricsDiv.innerHTML = '';
+
+  rubrics.forEach(rubric => {
+    const btn = document.createElement('button');
+    btn.textContent = rubric.title;
+    btn.onclick = () => {
+      socket.emit('select_rubric', rubric.id);
+    };
+    rubricsDiv.appendChild(btn);
+  });
+});
+
+socket.on('rubric_selected', (data) => {
+  status.textContent = 'Выбрана рубрика: ' + data.title;
+});
+</script>
 
 </body>
 </html>
