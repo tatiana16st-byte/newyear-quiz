@@ -1,95 +1,51 @@
 const socket = io();
 
-let mode = null;
-let avatar = null;
+const rubric = document.getElementById('rubric');
+const question = document.getElementById('question');
+const answersBlock = document.getElementById('answers');
+const result = document.getElementById('result');
+const image = document.getElementById('image');
 
-/* ================= MODE ================= */
+let answered = false;
 
-function selectMode(selectedMode) {
-  mode = selectedMode;
-  document.getElementById('mode-screen').style.display = 'none';
-  document.getElementById('avatar-screen').style.display = 'block';
-  loadAvatars();
+socket.on('new_question', (data) => {
+  answered = false;
+  result.textContent = '';
+  rubric.textContent = data.rubricTitle;
+  question.textContent = data.question;
+
+  if (data.imagePath) {
+    image.src = data.imagePath;
+    image.hidden = false;
+  } else {
+    image.hidden = true;
+  }
+
+  answersBlock.innerHTML = '';
+
+  for (let key in data.options) {
+    const btn = document.createElement('button');
+    btn.textContent = ${key}: ${data.options[key]};
+    btn.onclick = () => sendAnswer(key);
+    answersBlock.appendChild(btn);
+  }
+});
+
+function sendAnswer(answer) {
+  if (answered) return;
+  answered = true;
+  socket.emit('submit_answer', answer);
 }
 
-/* ================= AVATARS ================= */
-
-function loadAvatars() {
-  const container = document.getElementById('avatars');
-  container.innerHTML = '';
-
-  const path = mode === 'solo'
-    ? '/images/avatars/solo/'
-    : '/images/avatars/teams/';
-
-  for (let i = 1; i <= 8; i++) {
-    const img = document.createElement('img');
-    img.src = `${path}avatar${i}.png`;
-    img.className = 'avatar';
-    img.onclick = () => {
-      avatar = img.src;
-      document.querySelectorAll('.avatar').forEach(a => a.classList.remove('selected'));
-      img.classList.add('selected');
-    };
-    container.appendChild(img);
+socket.on('answer_result', (data) => {
+  if (data.correct) {
+    result.textContent = '✅ Правильно!';
+  } else {
+    result.textContent = ❌ Неправильно. Правильный ответ: ${data.correctText};
   }
-}
+});
 
-/* ================= NAME ================= */
-
-function goToName() {
-  if (!avatar) {
-    alert('Выберите аватар');
-    return;
-  }
-
-  document.getElementById('avatar-screen').style.display = 'none';
-  document.getElementById('name-screen').style.display = 'block';
-
-  document.getElementById('name-title').textContent =
-    mode === 'solo' ? 'Введите имя' : 'Введите данные команды';
-
-  if (mode === 'team') {
-    document.getElementById('teamName').style.display = 'block';
-  }
-}
-
-function register() {
-  const playerName = document.getElementById('playerName').value.trim();
-  const teamName = document.getElementById('teamName').value.trim();
-
-  if (!playerName) {
-    alert('Введите имя');
-    return;
-  }
-
-  if (mode === 'team' && !teamName) {
-    alert('Введите название команды');
-    return;
-  }
-
-  socket.emit('register_player', {
-    mode,
-    avatar,
-    playerName,
-    teamName
-  });
-
-  document.getElementById('name-screen').style.display = 'none';
-  document.getElementById('lobby-screen').style.display = 'block';
-}
-
-/* ================= LOBBY ================= */
-
-socket.on('lobby_update', players => {
-  const list = document.getElementById('players');
-  list.innerHTML = '';
-
-  players.forEach(p => {
-    const li = document.createElement('li');
-    li.textContent = p.mode === 'solo'
-      ? `🎮 ${p.playerName}`
-      : `👥 ${p.teamName} — ${p.playerName}`;
-    list.appendChild(li);
-  });
+socket.on('game_finished', () => {
+  question.textContent = 'Игра завершена 🎉';
+  answersBlock.innerHTML = '';
 });
