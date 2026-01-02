@@ -1,5 +1,5 @@
 module.exports = {
-  "rubricId": movies.,
+  "rubricId": 'movies',
   "rubricTitle": "Новогодние мультфильмы и фильмы",
   "questions": [
     {
