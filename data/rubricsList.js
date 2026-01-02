@@ -1,20 +1,8 @@
-/**
- * Главный файл конфигурации рубрик (rubricsList.js)
- * Путь к файлу в проекте: /data/rubricsList.js
- * Файлы вопросов находятся в: /data/rubrics/ (в корне проекта)
- */
-
 const path = require('path');
 
 let movies, fatherfrost, traditions, tree;
 
 try {
-  /**
-   * Разбор путей для Render (Linux):
-   * __dirname — это /opt/render/project/src/data/
-   * '..' — это /opt/render/project/src/
-   * '../..' — это /opt/render/project/ (корень вашего репозитория newyear-quiz)
-   */
   const baseDir = path.join(__dirname, '../../data/rubrics');
 
   movies = require(path.join(baseDir, 'movies'));
