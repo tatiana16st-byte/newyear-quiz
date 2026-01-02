@@ -1,14 +1,25 @@
+/**
+ * Главный файл конфигурации рубрик (rubricsList.js)
+ * Путь к файлу: /src/data/rubricsList.js
+ * Файлы вопросов находятся в: /data/rubrics/ (в корне проекта)
+ */
+
+const path = require('path');
+
 let movies, fatherfrost, traditions, tree;
 
 try {
-  movies = require('./movies');
-  fatherfrost = require('./fatherfrost');
-  traditions = require('./traditions');
-  tree = require('./tree');
+  // Мы находимся в src/data/. Чтобы попасть в /data/ в корне, 
+  // нужно подняться на два уровня вверх.
+  // Используем path.join для надежности на разных ОС
+  movies = require(path.join(__dirname, '../../data/rubrics/movies'));
+  fatherfrost = require(path.join(__dirname, '../../data/rubrics/fatherfrost'));
+  traditions = require(path.join(__dirname, '../../data/rubrics/traditions'));
+  tree = require(path.join(__dirname, '../../data/rubrics/tree'));
 } catch (e) {
-  console.error("ОШИБКА ЗАГРУЗКИ ФАЙЛОВ ВОПРОСОВ. Проверьте пути в require().");
-  console.error("Текущая ошибка:", e.message);
-  // Выбрасываем ошибку дальше, чтобы Render показал, какого именно файла не хватает
+  console.error("!!! КРИТИЧЕСКАЯ ОШИБКА: Модули не найдены по пути /data/rubrics/");
+  console.error("Попытка загрузки через относительный путь ../../data/rubrics/");
+  console.error("Ошибка:", e.message);
   throw e;
 }
 
