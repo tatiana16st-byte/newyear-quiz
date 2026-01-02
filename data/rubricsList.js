@@ -1,8 +1,22 @@
-// rubricsList.js
-const movies = require('./rubrics/movies');
-const fatherfrost = require('./rubrics/fatherfrost');
-const traditions = require('./rubrics/traditions');
-const tree = require('./rubrics/tree');
-
-const rubricsList = [movies, fatherfrost, traditions, tree];
-if (typeof module !== 'undefined') module.exports = rubricsList;
+module.exports = [
+  {
+    id: 1,
+    title: 'Новогодние мультфильмы и фильмы',
+    file: './movies'
+  },
+  {
+    id: 2,
+    title: 'Дед Мороз',
+    file: './fatherfrost'
+  },
+  {
+    id: 3,
+    title: 'Новогодние традиции',
+    file: './traditions'
+  },
+  {
+    id: 4,
+    title: 'Новогодняя ёлка',
+    file: './tree'
+  }
+];
