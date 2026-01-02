@@ -1,18 +1,35 @@
 const socket = io();
 
 const state = document.getElementById('state');
-const startBtn = document.getElementById('startBtn');
+const playersBlock = document.getElementById('players');
 
-startBtn.onclick = () => {
+function selectRubric(key) {
+  socket.emit('select_rubric', key);
+  state.textContent = 'Выбрана рубрика: ' + key;
+}
+
+function startGame() {
   socket.emit('start_game');
-};
+}
 
-socket.on('lobby_update', (players) => {
-  state.textContent =
+function nextQuestion() {
+  socket.emit('next_question');
+}
+
+socket.on('players_update', (players) => {
+  playersBlock.textContent =
     'Игроков: ' + players.length + '\n' +
     players.map(p => p.name).join('\n');
 });
 
+socket.on('rubric_selected', (title) => {
+  state.textContent = 'Рубрика: ' + title;
+});
+
 socket.on('game_started', () => {
-  state.textContent += '\n\n▶️ Игра запущена';
+  state.textContent = 'Игра запущена';
+});
+
+socket.on('game_finished', () => {
+  state.textContent = 'Игра завершена';
 });
