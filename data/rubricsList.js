@@ -1,6 +1,6 @@
 /**
  * Главный файл конфигурации рубрик (rubricsList.js)
- * Путь к файлу: /src/data/rubricsList.js
+ * Путь к файлу в проекте: /src/data/rubricsList.js
  * Файлы вопросов находятся в: /data/rubrics/ (в корне проекта)
  */
 
@@ -10,18 +10,21 @@ let movies, fatherfrost, traditions, tree;
 
 try {
   /**
-   * Разбор путей:
+   * Разбор путей для Render (Linux):
    * __dirname — это /opt/render/project/src/data/
    * '..' — это /opt/render/project/src/
-   * '../..' — это /opt/render/project/ (корень проекта)
+   * '../..' — это /opt/render/project/ (корень вашего репозитория newyear-quiz)
    */
-  movies = require(path.join(__dirname, '../../../data/rubrics/movies'));
-  fatherfrost = require(path.join(__dirname, '../../../data/rubrics/fatherfrost'));
-  traditions = require(path.join(__dirname, '../../../data/rubrics/traditions'));
-  tree = require(path.join(__dirname, '../../../data/rubrics/tree'));
+  const baseDir = path.join(__dirname, '../../data/rubrics');
+
+  movies = require(path.join(baseDir, 'movies'));
+  fatherfrost = require(path.join(baseDir, 'fatherfrost'));
+  traditions = require(path.join(baseDir, 'traditions'));
+  tree = require(path.join(baseDir, 'tree'));
+
 } catch (e) {
-  console.error("!!! КРИТИЧЕСКАЯ ОШИБКА: Модули не найдены по пути /data/rubrics/");
-  console.error("Попытка загрузки через относительный путь ../../../data/rubrics/");
+  console.error("!!! КРИТИЧЕСКАЯ ОШИБКА: Файлы рубрик не найдены по пути /data/rubrics/");
+  console.error("Попробуйте проверить, не заглавными ли буквами названы файлы в GitHub.");
   console.error("Ошибка:", e.message);
   throw e;
 }
