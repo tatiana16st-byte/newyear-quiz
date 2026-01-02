@@ -2,40 +2,64 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Викторина</title>
-  <style>
-    body {
-      background: #111;
-      color: #fff;
-      font-family: Arial;
-      text-align: center;
-    }
-    button {
-      padding: 12px;
-      margin: 8px;
-      font-size: 18px;
-      width: 80%;
-    }
-    .correct { background: green; }
-    .wrong { background: crimson; }
-    img {
-      max-width: 90%;
-      margin: 10px 0;
-    }
-  </style>
+  <title>Новогодняя викторина</title>
 </head>
 <body>
 
-<h2 id="rubric"></h2>
-<h3 id="question"></h3>
-<img id="image" hidden>
+<h2 id="title">Новогодняя викторина</h2>
 
-<div id="answers"></div>
+<div id="join">
+  <input id="name" placeholder="Введите имя" />
+  <br><br>
 
-<p id="result"></p>
+  <button onclick="selectAvatar('avatar 1')">Аватар 1</button>
+  <button onclick="selectAvatar('avatar 2')">Аватар 2</button>
+  <button onclick="selectAvatar('avatar 3')">Аватар 3</button>
+
+  <br><br>
+  <button onclick="joinGame()">Войти в игру</button>
+</div>
+
+<p id="status"></p>
 
 <script src="/socket.io/socket.io.js"></script>
-<script src="client.js"></script>
+<script>
+const socket = io();
+
+let avatar = null;
+
+const status = document.getElementById('status');
+const joinBlock = document.getElementById('join');
+
+function selectAvatar(a) {
+  avatar = a;
+  status.textContent = 'Выбран ' + a;
+}
+
+function joinGame() {
+  const name = document.getElementById('name').value;
+  if (!name || !avatar) {
+    alert('Введите имя и выберите аватар');
+    return;
+  }
+
+  socket.emit('register_player', {
+    name,
+    avatar
+  });
+
+  joinBlock.style.display = 'none';
+  status.textContent = 'Ожидание начала игры...';
+}
+
+socket.on('game_started', () => {
+  status.textContent = 'Игра началась. Ожидайте первый вопрос.';
+});
+
+socket.on('rubric_selected', (data) => {
+  status.textContent = 'Выбрана рубрика: ' + data.title;
+});
+</script>
 
 </body>
 </html>
