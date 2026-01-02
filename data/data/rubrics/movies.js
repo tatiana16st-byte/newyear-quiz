@@ -1,4 +1,3 @@
- // НАЧАЛО ФАЙЛА movies.js
 module.exports = {
   "rubricId": 1,
   "rubricTitle": "Новогодние мультфильмы и фильмы",
