@@ -1,75 +1,45 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Админ — Викторина</title>
+  <meta charset="UTF-8" />
+  <title>Админ панель</title>
+  <script src="/socket.io/socket.io.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
-      padding: 20px;
-    }
-    button {
-      padding: 12px 20px;
-      margin: 10px 10px 10px 0;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .rubrics {
-      margin-top: 20px;
-    }
-    .rubric {
-      display: inline-block;
-      margin-right: 15px;
-      text-align: center;
-      cursor: pointer;
-    }
-    .rubric img {
-      width: 120px;
-      height: 120px;
-      object-fit: cover;
-      border-radius: 12px;
-      display: block;
-      margin-bottom: 8px;
-    }
+    body { font-family: Arial; padding: 20px; }
+    button { padding: 10px 15px; margin: 5px; }
+    .rubrics { margin-top: 20px; }
   </style>
 </head>
 <body>
 
-<h1>🎤 Админ панель</h1>
+<h1>Админ панель</h1>
 
-<button id="startBtn">▶ Старт игры</button>
-
-<h3 id="status">Ожидание игроков…</h3>
+<button id="startGame">▶ Старт игры</button>
+<p id="status"></p>
 
 <div class="rubrics" id="rubrics"></div>
 
-<script src="/socket.io/socket.io.js"></script>
 <script>
   const socket = io();
-  const rubricsDiv = document.getElementById('rubrics');
-  const status = document.getElementById('status');
+  const startBtn = document.getElementById("startGame");
+  const status = document.getElementById("status");
+  const rubricsDiv = document.getElementById("rubrics");
 
-  document.getElementById('startBtn').onclick = () => {
-    socket.emit('start_game');
-    status.innerText = 'Игра запущена. Выберите рубрику';
+  startBtn.onclick = () => {
+    socket.emit("adminStart");
+    status.textContent = "Игра запущена. Выберите рубрику";
   };
 
-  socket.on('rubrics_list', (rubrics) => {
-    rubricsDiv.innerHTML = '';
+  socket.on("rubricsList", (rubrics) => {
+    rubricsDiv.innerHTML = "";
+
     rubrics.forEach(r => {
-      const div = document.createElement('div');
-      div.className = 'rubric';
-      div.innerHTML = `
-        <img src="${r.image}">
-        <div>${r.title}</div>
-      `;
-      div.onclick = () => {
-        socket.emit('select_rubric', r.id);
-        status.innerText = 'Рубрика выбрана';
+      const btn = document.createElement("button");
+      btn.textContent = r.title;
+      btn.onclick = () => {
+        socket.emit("selectRubric", r.id);
       };
-      rubricsDiv.appendChild(div);
+      rubricsDiv.appendChild(btn);
     });
   });
 </script>
