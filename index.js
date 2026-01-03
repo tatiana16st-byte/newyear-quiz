@@ -3,102 +3,83 @@ const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
 
-// Загружаем список рубрик
 const rubricsList = require("./data/rubricsList");
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+/* ===== STATIC ===== */
 app.use(express.static(path.join(__dirname, "public")));
 
-let players = {}; 
-let gameState = {
-    status: "REGISTRATION", // SELECT_MODE, REGISTRATION, QUESTION, RESULT
-    currentRubric: null,
-    currentQuestionIndex: 0,
-    answers: {},
-    timer: 30
-};
-
-// Соответствие ID рубрики и файла
-const rubricFiles = {
-    1: "movies",
-    2: "fatherfrost",
-    3: "traditions",
-    4: "tree"
-};
-
-io.on("connection", (socket) => {
-    socket.emit("gameState", getPublicState());
-
-    // Регистрация игрока
-    socket.on("joinGame", (data) => {
-        players[socket.id] = { 
-            name: data.name, 
-            avatar: data.avatar, 
-            score: 0, 
-            hasAnswered: false 
-        };
-        io.emit("gameState", getPublicState());
-    });
-
-    // Админ: Выбор рубрики
-    socket.on("selectRubric", (id) => {
-        const fileName = rubricFiles[id];
-        gameState.currentRubric = require(`./data/rubrics/${fileName}`);
-        gameState.currentQuestionIndex = 0;
-        startQuestion();
-    });
-
-    // Игрок: Отправка ответа
-    socket.on("submitAnswer", (answerKey) => {
-        if (players[socket.id] && !players[socket.id].hasAnswered) {
-            gameState.answers[socket.id] = answerKey;
-            players[socket.id].hasAnswered = true;
-            io.emit("gameState", getPublicState());
-        }
-    });
-
-    // Админ: Следующий шаг
-    socket.on("admin_next", () => {
-        if (gameState.status === "QUESTION") showResult();
-        else nextQuestion();
-    });
+/* ===== ROUTES ===== */
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "client.html"));
 });
 
-function startQuestion() {
-    gameState.status = "QUESTION";
-    gameState.timer = 30;
-    gameState.answers = {};
-    Object.values(players).forEach(p => p.hasAnswered = false);
-    io.emit("gameState", getPublicState());
-}
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin.html"));
+});
 
-function showResult() {
-    const q = gameState.currentRubric.questions[gameState.currentQuestionIndex];
-    Object.keys(gameState.answers).forEach(id => {
-        if (gameState.answers[id] === q.correctAnswer) players[id].score += 1;
-    });
-    gameState.status = "RESULT";
-    io.emit("reveal_answer", { correct: q.correctAnswer, text: q.correctText });
-    io.emit("gameState", getPublicState());
-}
+/* ===== GAME STATE ===== */
+let players = [];
+let currentRubric = null;
+let currentQuestionIndex = 0;
+let gameStarted = false;
 
-function nextQuestion() {
-    gameState.currentQuestionIndex++;
-    if (gameState.currentQuestionIndex >= 5) gameState.status = "REGISTRATION"; // Конец раунда
-    else startQuestion();
-}
+/* ===== SOCKETS ===== */
+io.on("connection", (socket) => {
+  console.log("Подключился:", socket.id);
 
-function getPublicState() {
-    const q = gameState.currentRubric ? gameState.currentRubric.questions[gameState.currentQuestionIndex] : null;
-    return {
-        ...gameState,
-        players: Object.values(players),
-        question: q ? { text: q.question, options: q.options, image: q.imagePath } : null,
-        rubricsList: rubricsList
-    };
-}
+  /* ===== PLAYER JOIN ===== */
+  socket.on("joinGame", (player) => {
+    players.push({ ...player, id: socket.id });
+    socket.emit("waiting");
+    io.emit("playersUpdate", players);
+  });
 
-server.listen(3000, () => console.log("🎄 Викторина запущена: http://localhost:3000"));
+  /* ===== ADMIN START ===== */
+  socket.on("adminStart", () => {
+    gameStarted = true;
+
+    // 🔥 ВАЖНО: сообщаем ВСЕМ игрокам, что игра началась
+    io.emit("game_started");
+
+    // отправляем список рубрик ТОЛЬКО админу
+    socket.emit("rubricsList", rubricsList);
+  });
+
+  /* ===== SELECT RUBRIC ===== */
+  socket.on("selectRubric", (rubricId) => {
+    const rubricInfo = rubricsList.find(r => r.id === rubricId);
+    if (!rubricInfo) return;
+
+    currentRubric = require(`./data/rubrics/${rubricInfo.file}`);
+    currentQuestionIndex = 0;
+
+    sendQuestion();
+  });
+
+  /* ===== SEND QUESTION ===== */
+  function sendQuestion() {
+    if (!currentRubric) return;
+
+    const question = currentRubric.questions[currentQuestionIndex];
+    if (!question) return;
+
+    console.log("Отправляем вопрос:", question.question);
+
+    // 🔥 ВАЖНО: отправляем вопрос ВСЕМ игрокам
+    io.emit("question", question);
+  }
+
+  socket.on("disconnect", () => {
+    players = players.filter(p => p.id !== socket.id);
+  });
+});
+
+/* ===== START SERVER ===== */
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log("Server started on port", PORT);
+});
