@@ -52,14 +52,11 @@ socket.on("selectRubric", (rubricId) => {
   const rubricInfo = rubricsList.find(r => r.id === rubricId);
   if (!rubricInfo) return;
 
-  currentRubric = require(`./data/rubrics/${rubricInfo.file}`);
-  currentQuestionIndex = 0;
-  gameStarted = true;
+  const rubricData = require(`./data/rubrics/${rubricInfo.file}`);
 
-  // 🔥 ВАЖНО
-  io.emit("game_started");
+  game.startGame(rubricData.questions);
 
-  sendQuestion();
+  io.emit("question", game.getCurrentQuestion());
 });
 
   /* ===== SEND QUESTION ===== */
@@ -85,5 +82,6 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log("Server started on port", PORT);
 });
+
 
 
