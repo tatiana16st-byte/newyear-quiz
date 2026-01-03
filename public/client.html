@@ -1,17 +1,70 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head><meta charset="UTF-8"><title>Викторина</title></head>
+<head>
+  <meta charset="UTF-8">
+  <title>Новогодняя викторина</title>
+  <style>
+    body { font-family: Arial; text-align: center; background: #0b1a2b; color: white; }
+    .avatars img {
+      width: 80px;
+      margin: 5px;
+      cursor: pointer;
+      border: 3px solid transparent;
+      border-radius: 50%;
+    }
+    .avatars img.selected {
+      border-color: gold;
+    }
+    button { padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
 <body>
-  <input id="name" placeholder="Имя">
-  <div>
-    <label><input type="radio" name="avatar" value="avatar1.png">1</label>
-    <label><input type="radio" name="avatar" value="avatar2.png">2</label>
-    <label><input type="radio" name="avatar" value="avatar3.png">3</label>
-  </div>
-  <button id="startBtn">Начать игру</button>
-  <div id="status"></div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="client.js"></script>
+<h1>🎄 Новогодняя викторина</h1>
+
+<input id="name" placeholder="Введите имя" />
+
+<h3>Выберите аватар</h3>
+<div class="avatars" id="avatars"></div>
+
+<br>
+<button onclick="startGame()">Начать игру</button>
+
+<p id="status"></p>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+  let selectedAvatar = null;
+
+  const avatarsDiv = document.getElementById("avatars");
+
+  for (let i = 1; i <= 8; i++) {
+    const img = document.createElement("img");
+    img.src = `/images/avatars/solo/avatar${i}.png`;
+    img.onclick = () => {
+      document.querySelectorAll(".avatars img").forEach(a => a.classList.remove("selected"));
+      img.classList.add("selected");
+      selectedAvatar = img.src;
+    };
+    avatarsDiv.appendChild(img);
+  }
+
+  function startGame() {
+    const name = document.getElementById("name").value.trim();
+    if (!name || !selectedAvatar) {
+      alert("Введите имя и выберите аватар");
+      return;
+    }
+
+    socket.emit("joinGame", { name, avatar: selectedAvatar });
+    document.getElementById("status").innerText = "Ожидание начала игры...";
+  }
+
+  socket.on("question", (q) => {
+    document.body.innerHTML = `<h2>${q.question}</h2>`;
+  });
+</script>
+
 </body>
 </html>
