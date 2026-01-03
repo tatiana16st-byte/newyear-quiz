@@ -4,65 +4,116 @@
   <meta charset="UTF-8">
   <title>Новогодняя викторина</title>
   <style>
-    body { font-family: Arial; text-align: center; background: #0b1a2b; color: white; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b0b0b;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
     .avatars img {
       width: 80px;
+      height: 80px;
+      border-radius: 50%;
       margin: 5px;
       cursor: pointer;
       border: 3px solid transparent;
-      border-radius: 50%;
     }
     .avatars img.selected {
       border-color: gold;
     }
-    button { padding: 10px 20px; font-size: 16px; }
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+    .answers button {
+      display: block;
+      width: 100%;
+      max-width: 300px;
+      margin: 10px auto;
+    }
+    img.question-img {
+      max-width: 300px;
+      margin: 15px auto;
+      display: block;
+    }
   </style>
 </head>
 <body>
 
-<h1>🎄 Новогодняя викторина</h1>
+<h1>🎄 Викторина</h1>
 
-<input id="name" placeholder="Введите имя" />
+<div id="join">
+  <input id="name" placeholder="Введите имя"><br><br>
 
-<h3>Выберите аватар</h3>
-<div class="avatars" id="avatars"></div>
+  <div class="avatars" id="avatars"></div>
 
-<br>
-<button onclick="startGame()">Начать игру</button>
+  <button id="joinBtn">Начать игру</button>
+</div>
 
-<p id="status"></p>
+<div id="waiting" style="display:none;">
+  ⏳ Ожидание начала игры…
+</div>
+
+<div id="game" style="display:none;">
+  <h2 id="question"></h2>
+  <img id="questionImg" class="question-img">
+  <div class="answers" id="answers"></div>
+</div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
   const socket = io();
   let selectedAvatar = null;
 
-  const avatarsDiv = document.getElementById("avatars");
+  const avatarsDiv = document.getElementById('avatars');
 
+  // 8 аватаров
   for (let i = 1; i <= 8; i++) {
-    const img = document.createElement("img");
+    const img = document.createElement('img');
     img.src = `/images/avatars/solo/avatar${i}.png`;
     img.onclick = () => {
-      document.querySelectorAll(".avatars img").forEach(a => a.classList.remove("selected"));
-      img.classList.add("selected");
+      document.querySelectorAll('.avatars img')
+        .forEach(a => a.classList.remove('selected'));
+      img.classList.add('selected');
       selectedAvatar = img.src;
     };
     avatarsDiv.appendChild(img);
   }
 
-  function startGame() {
-    const name = document.getElementById("name").value.trim();
-    if (!name || !selectedAvatar) {
-      alert("Введите имя и выберите аватар");
-      return;
-    }
+  document.getElementById('joinBtn').onclick = () => {
+    const name = document.getElementById('name').value.trim();
+    if (!name || !selectedAvatar) return alert('Введите имя и выберите аватар');
 
-    socket.emit("joinGame", { name, avatar: selectedAvatar });
-    document.getElementById("status").innerText = "Ожидание начала игры...";
-  }
+    socket.emit('register_player', { name, avatar: selectedAvatar });
 
-  socket.on("question", (q) => {
-    document.body.innerHTML = `<h2>${q.question}</h2>`;
+    document.getElementById('join').style.display = 'none';
+    document.getElementById('waiting').style.display = 'block';
+  };
+
+  socket.on('game_started', () => {
+    document.getElementById('waiting').style.display = 'none';
+    document.getElementById('game').style.display = 'block';
+  });
+
+  socket.on('question', (q) => {
+    document.getElementById('question').innerText = q.question;
+    document.getElementById('questionImg').src = q.imagePath;
+
+    const answersDiv = document.getElementById('answers');
+    answersDiv.innerHTML = '';
+
+    Object.entries(q.options).forEach(([key, text]) => {
+      const btn = document.createElement('button');
+      btn.innerText = `${key}: ${text}`;
+      btn.onclick = () => {
+        socket.emit('answer', key);
+        answersDiv.innerHTML = 'Ответ принят';
+      };
+      answersDiv.appendChild(btn);
+    });
   });
 </script>
 
