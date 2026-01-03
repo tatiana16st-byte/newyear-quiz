@@ -3,14 +3,8 @@ const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
 
-// Загружаем ваши данные
-const rubricsList = require("./rubricsList");
-const rubricsData = {
-    1: require("./movies"),
-    2: require("./fatherfrost"),
-    3: require("./traditions"),
-    4: require("./tree")
-};
+// Загружаем список рубрик
+const rubricsList = require("./data/rubricsList");
 
 const app = express();
 const server = http.createServer(app);
@@ -18,55 +12,46 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "client.html")));
-app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "public", "admin.html")));
-
 let players = {}; 
 let gameState = {
-    status: "SELECT_MODE",
-    gameMode: "team", // 'team' или 'single'
-    maxPlayers: 4,
+    status: "REGISTRATION", // SELECT_MODE, REGISTRATION, QUESTION, RESULT
     currentRubric: null,
     currentQuestionIndex: 0,
     answers: {},
     timer: 30
 };
 
+// Соответствие ID рубрики и файла
+const rubricFiles = {
+    1: "movies",
+    2: "fatherfrost",
+    3: "traditions",
+    4: "tree"
+};
+
 io.on("connection", (socket) => {
     socket.emit("gameState", getPublicState());
 
-    // Админ: Выбор режима
-    socket.on("admin_set_mode", (mode) => {
-        gameState.gameMode = mode;
-        gameState.maxPlayers = (mode === "team") ? 4 : 8;
-        gameState.status = "REGISTRATION";
-        players = {}; 
-        io.emit("gameState", getPublicState());
-    });
-
-    // Игрок: Регистрация
+    // Регистрация игрока
     socket.on("joinGame", (data) => {
-        if (Object.keys(players).length < gameState.maxPlayers) {
-            players[socket.id] = { 
-                name: data.name, 
-                avatar: data.avatar, 
-                score: 0, 
-                hasAnswered: false 
-            };
-            socket.emit("join_success");
-        } else {
-            socket.emit("error", "Мест нет!");
-        }
+        players[socket.id] = { 
+            name: data.name, 
+            avatar: data.avatar, 
+            score: 0, 
+            hasAnswered: false 
+        };
         io.emit("gameState", getPublicState());
     });
 
-    // Админ: Старт и выбор рубрики
+    // Админ: Выбор рубрики
     socket.on("selectRubric", (id) => {
-        gameState.currentRubric = rubricsData[id];
+        const fileName = rubricFiles[id];
+        gameState.currentRubric = require(`./data/rubrics/${fileName}`);
         gameState.currentQuestionIndex = 0;
         startQuestion();
     });
 
+    // Игрок: Отправка ответа
     socket.on("submitAnswer", (answerKey) => {
         if (players[socket.id] && !players[socket.id].hasAnswered) {
             gameState.answers[socket.id] = answerKey;
@@ -75,12 +60,10 @@ io.on("connection", (socket) => {
         }
     });
 
+    // Админ: Следующий шаг
     socket.on("admin_next", () => {
-        if (gameState.status === "QUESTION") {
-            showResult();
-        } else {
-            nextQuestion();
-        }
+        if (gameState.status === "QUESTION") showResult();
+        else nextQuestion();
     });
 });
 
@@ -95,9 +78,7 @@ function startQuestion() {
 function showResult() {
     const q = gameState.currentRubric.questions[gameState.currentQuestionIndex];
     Object.keys(gameState.answers).forEach(id => {
-        if (gameState.answers[id] === q.correctAnswer) {
-            players[id].score += 1;
-        }
+        if (gameState.answers[id] === q.correctAnswer) players[id].score += 1;
     });
     gameState.status = "RESULT";
     io.emit("reveal_answer", { correct: q.correctAnswer, text: q.correctText });
@@ -106,12 +87,8 @@ function showResult() {
 
 function nextQuestion() {
     gameState.currentQuestionIndex++;
-    if (gameState.currentQuestionIndex >= 5) { // По 5 вопросов на раунд
-        gameState.status = "LOBBY"; 
-    } else {
-        startQuestion();
-    }
-    io.emit("gameState", getPublicState());
+    if (gameState.currentQuestionIndex >= 5) gameState.status = "REGISTRATION"; // Конец раунда
+    else startQuestion();
 }
 
 function getPublicState() {
@@ -119,8 +96,9 @@ function getPublicState() {
     return {
         ...gameState,
         players: Object.values(players),
-        question: q ? { text: q.question, options: q.options, image: q.imagePath } : null
+        question: q ? { text: q.question, options: q.options, image: q.imagePath } : null,
+        rubricsList: rubricsList
     };
 }
 
-server.listen(3000, () => console.log("🚀 Server at http://localhost:3000"));
+server.listen(3000, () => console.log("🎄 Викторина запущена: http://localhost:3000"));
