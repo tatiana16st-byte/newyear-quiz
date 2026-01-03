@@ -1,33 +1,88 @@
-io.on('connection', (socket) => {
-  console.log('Подключился:', socket.id);
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+const path = require("path");
 
-  socket.on('register_player', (player) => {
-    players[socket.id] = player;
-    console.log('Игрок зарегистрирован:', player.name);
+const rubricsList = require("./data/rubricsList");
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+/* ===== STATIC ===== */
+app.use(express.static(path.join(__dirname, "public")));
+
+/* ===== ROUTES ===== */
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "client.html"));
+});
+
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin.html"));
+});
+
+/* ===== GAME STATE ===== */
+let players = [];
+let gameStarted = false;
+let currentRubric = null;
+let currentQuestionIndex = 0;
+
+/* ===== SOCKETS ===== */
+io.on("connection", (socket) => {
+  console.log("Подключился:", socket.id);
+
+  // 👤 Игрок подключился
+  socket.on("joinGame", (player) => {
+    players.push({ ...player, id: socket.id });
+
+    socket.emit("waiting");
+    io.emit("playersUpdate", players);
+
+    console.log("Игрок:", player.name);
   });
 
-  socket.on('start_game', () => {
-    console.log('Игра запущена админом');
+  // 👑 Админ нажал «Старт игры»
+  socket.on("adminStart", () => {
+    console.log("Игра запущена админом");
 
     gameStarted = true;
 
-    // 🔥 ВАЖНО — отправляем ВСЕМ игрокам
-    io.emit('game_started');
+    // 🔥 СООБЩАЕМ ВСЕМ ИГРОКАМ
+    io.emit("game_started");
 
-    // отправляем рубрики админу
-    io.emit('rubrics_list', rubricsList);
+    // 📦 Отправляем рубрики админу
+    io.emit("rubricsList", rubricsList);
   });
 
-  socket.on('select_rubric', (rubricId) => {
-    currentRubric = rubricId;
+  // 📚 Выбор рубрики
+  socket.on("selectRubric", (rubricId) => {
+    const rubricInfo = rubricsList.find(r => r.id === rubricId);
+    if (!rubricInfo) return;
+
+    currentRubric = require(`./data/rubrics/${rubricInfo.file}`);
     currentQuestionIndex = 0;
 
-    const question = getQuestion();
-    io.emit('question', question);
+    sendQuestion();
   });
 
-  socket.on('answer', (answer) => {
-    console.log('Ответ игрока:', answer);
+  // ❓ Отправка вопроса
+  function sendQuestion() {
+    if (!currentRubric) return;
+
+    const q = currentRubric.questions[currentQuestionIndex];
+    if (!q) return;
+
+    io.emit("question", q);
+  }
+
+  socket.on("disconnect", () => {
+    players = players.filter(p => p.id !== socket.id);
+    io.emit("playersUpdate", players);
   });
 });
 
+/* ===== START SERVER ===== */
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log("Server started on port", PORT);
+});
