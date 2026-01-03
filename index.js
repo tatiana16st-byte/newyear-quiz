@@ -23,38 +23,33 @@ app.get("/admin", (req, res) => {
 
 /* ===== GAME STATE ===== */
 let players = [];
-let gameStarted = false;
 let currentRubric = null;
 let currentQuestionIndex = 0;
+let gameStarted = false;
 
 /* ===== SOCKETS ===== */
 io.on("connection", (socket) => {
   console.log("Подключился:", socket.id);
 
-  // 👤 Игрок подключился
+  /* ===== PLAYER JOIN ===== */
   socket.on("joinGame", (player) => {
     players.push({ ...player, id: socket.id });
-
     socket.emit("waiting");
     io.emit("playersUpdate", players);
-
-    console.log("Игрок:", player.name);
   });
 
-  // 👑 Админ нажал «Старт игры»
+  /* ===== ADMIN START ===== */
   socket.on("adminStart", () => {
-    console.log("Игра запущена админом");
-
     gameStarted = true;
 
-    // 🔥 СООБЩАЕМ ВСЕМ ИГРОКАМ
+    // 🔥 ВАЖНО: сообщаем ВСЕМ игрокам, что игра началась
     io.emit("game_started");
 
-    // 📦 Отправляем рубрики админу
-    io.emit("rubricsList", rubricsList);
+    // отправляем список рубрик ТОЛЬКО админу
+    socket.emit("rubricsList", rubricsList);
   });
 
-  // 📚 Выбор рубрики
+  /* ===== SELECT RUBRIC ===== */
   socket.on("selectRubric", (rubricId) => {
     const rubricInfo = rubricsList.find(r => r.id === rubricId);
     if (!rubricInfo) return;
@@ -65,19 +60,21 @@ io.on("connection", (socket) => {
     sendQuestion();
   });
 
-  // ❓ Отправка вопроса
+  /* ===== SEND QUESTION ===== */
   function sendQuestion() {
     if (!currentRubric) return;
 
-    const q = currentRubric.questions[currentQuestionIndex];
-    if (!q) return;
+    const question = currentRubric.questions[currentQuestionIndex];
+    if (!question) return;
 
-    io.emit("question", q);
+    console.log("Отправляем вопрос:", question.question);
+
+    // 🔥 ВАЖНО: отправляем вопрос ВСЕМ игрокам
+    io.emit("question", question);
   }
 
   socket.on("disconnect", () => {
     players = players.filter(p => p.id !== socket.id);
-    io.emit("playersUpdate", players);
   });
 });
 
