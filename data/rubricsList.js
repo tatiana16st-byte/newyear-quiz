@@ -5,18 +5,28 @@
  */
 
 const path = require('path');
+const fs = require('fs');
 
 let moviesData, fatherfrostData, traditionsData, treeData;
 
+// Определяем базовый путь к папке с рубриками
+// Проверяем сначала корень проекта (на два уровня выше от src/data)
+let baseDir = path.join(__dirname, '../../data/rubrics');
+
+// Если вдруг папка data лежит внутри src, проверяем и этот путь
+if (!fs.existsSync(baseDir)) {
+  baseDir = path.join(__dirname, './rubrics');
+}
+
 try {
-  // Загружаем данные из файлов, используя правильный путь относительно /src/data/
-  moviesData = require(path.join(__dirname, '../../data/rubrics/movies'));
-  fatherfrostData = require(path.join(__dirname, '../../data/rubrics/fatherfrost'));
-  traditionsData = require(path.join(__dirname, '../../data/rubrics/traditions'));
-  treeData = require(path.join(__dirname, '../../data/rubrics/tree'));
+  moviesData = require(path.join(baseDir, 'movies'));
+  fatherfrostData = require(path.join(baseDir, 'fatherfrost'));
+  traditionsData = require(path.join(baseDir, 'traditions'));
+  treeData = require(path.join(baseDir, 'tree'));
 } catch (e) {
-  console.error("!!! КРИТИЧЕСКАЯ ОШИБКА: Файлы рубрик не найдены по пути /data/rubrics/");
-  console.error("Проверьте наличие файлов в GitHub по пути data/rubrics/");
+  console.error("!!! КРИТИЧЕСКАЯ ОШИБКА: Файлы рубрик не найдены.");
+  console.error("Искали в: " + baseDir);
+  console.error("Ошибка:", e.message);
   throw e;
 }
 
