@@ -1,35 +1,17 @@
 const socket = io();
 
-const state = document.getElementById('state');
-const playersBlock = document.getElementById('players');
+document.getElementById("startGame").onclick = () => {
+  socket.emit("adminStart");
+};
 
-function selectRubric(key) {
-  socket.emit('select_rubric', key);
-  state.textContent = 'Выбрана рубрика: ' + key;
-}
+socket.on("rubricsList", (rubrics) => {
+  const container = document.getElementById("rubrics");
+  container.innerHTML = "";
 
-function startGame() {
-  socket.emit('start_game');
-}
-
-function nextQuestion() {
-  socket.emit('next_question');
-}
-
-socket.on('players_update', (players) => {
-  playersBlock.textContent =
-    'Игроков: ' + players.length + '\n' +
-    players.map(p => p.name).join('\n');
-});
-
-socket.on('rubric_selected', (title) => {
-  state.textContent = 'Рубрика: ' + title;
-});
-
-socket.on('game_started', () => {
-  state.textContent = 'Игра запущена';
-});
-
-socket.on('game_finished', () => {
-  state.textContent = 'Игра завершена';
+  rubrics.forEach(r => {
+    const btn = document.createElement("button");
+    btn.innerText = r.title;
+    btn.onclick = () => socket.emit("selectRubric", r.id);
+    container.appendChild(btn);
+  });
 });
