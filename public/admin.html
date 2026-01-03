@@ -1,50 +1,11 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head>
-<meta charset="UTF-8">
-<title>Admin Panel</title>
-<style>
-body { font-family: Arial; text-align:center; }
-button { margin:5px; padding:8px 15px; }
-.rubrics button { margin:5px; }
-</style>
-</head>
+<head><meta charset="UTF-8"><title>Админ</title></head>
 <body>
+  <button id="startGame">Старт игры</button>
+  <div id="rubrics"></div>
 
-<h2>🎅 Панель администратора</h2>
-
-<div class="rubrics" id="rubrics"></div>
-<div><button onclick="startGame()">Старт игры</button></div>
-<h3>Игроки:</h3>
-<pre id="players"></pre>
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="/data/rubricsList.js"></script>
-<script>
-const socket = io();
-const rubricsDiv = document.getElementById('rubrics');
-const playersDiv = document.getElementById('players');
-let selectedRubricId = null;
-
-rubricsList.forEach(r=>{
-  const btn = document.createElement('button');
-  btn.textContent = r.rubricTitle;
-  btn.onclick = ()=> {
-    selectedRubricId = r.rubricId;
-    rubricsDiv.querySelectorAll('button').forEach(b=>b.style.background='');
-    btn.style.background = '#2ecc71';
-  };
-  rubricsDiv.appendChild(btn);
-});
-
-function startGame() {
-  if (!selectedRubricId) { alert('Выберите рубрику'); return; }
-  socket.emit('start_game', selectedRubricId);
-}
-
-socket.on('lobby_update', players=>{
-  playersDiv.textContent = players.map((p,i)=>`${i+1}. ${p.name} (${p.avatar})`).join('\n');
-});
-</script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="admin.js"></script>
 </body>
 </html>
