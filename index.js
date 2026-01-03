@@ -50,15 +50,19 @@ io.on("connection", (socket) => {
   });
 
   /* ===== SELECT RUBRIC ===== */
-  socket.on("selectRubric", (rubricId) => {
-    const rubricInfo = rubricsList.find(r => r.id === rubricId);
-    if (!rubricInfo) return;
+socket.on("selectRubric", (rubricId) => {
+  const rubricInfo = rubricsList.find(r => r.id === rubricId);
+  if (!rubricInfo) return;
 
-    currentRubric = require(`./data/rubrics/${rubricInfo.file}`);
-    currentQuestionIndex = 0;
+  currentRubric = require(`./data/rubrics/${rubricInfo.file}`);
+  currentQuestionIndex = 0;
+  gameStarted = true;
 
-    sendQuestion();
-  });
+  // 🔥 ВАЖНО
+  io.emit("game_started");
+
+  sendQuestion();
+});
 
   /* ===== SEND QUESTION ===== */
   function sendQuestion() {
@@ -83,3 +87,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log("Server started on port", PORT);
 });
+
