@@ -1,5 +1,5 @@
 module.exports = {
-  "rubricId": 'traditions', 
+  "rubricId": 3, 
   "rubricTitle": "Традиции на Новый год",
   "questions": [
     {
