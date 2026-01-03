@@ -1,5 +1,5 @@
 module.exports = {
-  rubricId: 'fatherfrost',
+  rubricId: '2',
   rubricTitle: 'ДЕД МОРОЗ',
   questions: [
     {
