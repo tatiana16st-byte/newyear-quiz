@@ -1,11 +1,41 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head><meta charset="UTF-8"><title>Админ</title></head>
+<head>
+  <meta charset="UTF-8">
+  <title>Админ панель</title>
+  <style>
+    body { font-family: Arial; background: #111; color: white; text-align: center; }
+    button { margin: 10px; padding: 10px 20px; }
+  </style>
+</head>
 <body>
-  <button id="startGame">Старт игры</button>
-  <div id="rubrics"></div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="admin.js"></script>
+<h1>🎤 Админ панель</h1>
+
+<button onclick="startGame()">▶️ Старт игры</button>
+
+<h3>Выберите рубрику</h3>
+<div id="rubrics"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+  const rubricsDiv = document.getElementById("rubrics");
+
+  function startGame() {
+    socket.emit("adminStart");
+  }
+
+  socket.on("rubricsList", (rubrics) => {
+    rubricsDiv.innerHTML = "";
+    rubrics.forEach(r => {
+      const btn = document.createElement("button");
+      btn.innerText = r.title;
+      btn.onclick = () => socket.emit("selectRubric", r.id);
+      rubricsDiv.appendChild(btn);
+    });
+  });
+</script>
+
 </body>
 </html>
