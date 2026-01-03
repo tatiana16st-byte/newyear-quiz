@@ -9,36 +9,53 @@ const fs = require('fs');
 
 let moviesData, fatherfrostData, traditionsData, treeData;
 
-// Определяем базовый путь к папке с рубриками
-// Проверяем сначала корень проекта (на два уровня выше от src/data)
-let baseDir = path.join(__dirname, '../../data/rubrics');
+/**
+ * Пытаемся определить корректный путь к папке data.
+ * На Render структура обычно такая: /opt/render/project/src/
+ * Значит папка data в корне будет на два уровня выше от этого файла.
+ */
+const rootDir = path.resolve(__dirname, '../../'); 
+const baseDir = path.join(rootDir, 'data', 'rubrics');
 
-// Если вдруг папка data лежит внутри src, проверяем и этот путь
-if (!fs.existsSync(baseDir)) {
-  baseDir = path.join(__dirname, './rubrics');
-}
+console.log("Попытка загрузки рубрик из: " + baseDir);
 
 try {
+  // Проверяем существование папки перед загрузкой
+  if (!fs.existsSync(baseDir)) {
+    throw new Error(`Директория ${baseDir} не найдена`);
+  }
+
+  // Загружаем данные
   moviesData = require(path.join(baseDir, 'movies'));
   fatherfrostData = require(path.join(baseDir, 'fatherfrost'));
   traditionsData = require(path.join(baseDir, 'traditions'));
   treeData = require(path.join(baseDir, 'tree'));
+  
+  console.log("✅ Все файлы рубрик успешно найдены и загружены.");
 } catch (e) {
-  console.error("!!! КРИТИЧЕСКАЯ ОШИБКА: Файлы рубрик не найдены.");
-  console.error("Искали в: " + baseDir);
-  console.error("Ошибка:", e.message);
-  throw e;
+  console.error("❌ ОШИБКА ЗАГРУЗКИ:");
+  console.error("Путь:", baseDir);
+  console.error("Текст ошибки:", e.message);
+  
+  // Чтобы сервер не падал, если файлы не найдены, создадим пустые заглушки
+  moviesData = { questions: [] };
+  fatherfrostData = { questions: [] };
+  traditionsData = { questions: [] };
+  treeData = { questions: [] };
 }
 
 /**
  * Функция для извлечения массива вопросов.
- * Ваши файлы экспортируют объект { questions: [...] }, 
- * поэтому мы достаем именно поле questions.
  */
-const extractQuestions = (moduleExport) => {
-  if (moduleExport && moduleExport.questions) return moduleExport.questions;
-  if (Array.isArray(moduleExport)) return moduleExport;
-  return [];
+const extractQuestions = (moduleExport, title) => {
+  let q = [];
+  if (moduleExport && moduleExport.questions) {
+    q = moduleExport.questions;
+  } else if (Array.isArray(moduleExport)) {
+    q = moduleExport;
+  }
+  console.log(`📊 Рубрика "${title}": загружено ${q.length} вопросов.`);
+  return q;
 };
 
 const rubricsList = [
@@ -46,25 +63,25 @@ const rubricsList = [
     id: 1,
     title: 'Новогодние мультфильмы и фильмы',
     rubricId: 'movies',
-    questions: extractQuestions(moviesData)
+    questions: extractQuestions(moviesData, 'Фильмы')
   },
   {
     id: 2,
     title: 'Дед Мороз',
     rubricId: 'fatherfrost',
-    questions: extractQuestions(fatherfrostData)
+    questions: extractQuestions(fatherfrostData, 'Дед Мороз')
   },
   {
     id: 3,
     title: 'Новогодние традиции',
     rubricId: 'traditions',
-    questions: extractQuestions(traditionsData)
+    questions: extractQuestions(traditionsData, 'Традиции')
   },
   {
     id: 4,
     title: 'Новогодняя ёлка',
     rubricId: 'tree',
-    questions: extractQuestions(treeData)
+    questions: extractQuestions(treeData, 'Ёлка')
   }
 ];
 
