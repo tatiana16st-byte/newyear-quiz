@@ -1,88 +1,58 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <title>Викторина</title>
-  <script src="/socket.io/socket.io.js"></script>
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    .avatars img {
-      width: 60px;
-      border-radius: 50%;
-      margin: 5px;
-      cursor: pointer;
-      border: 2px solid transparent;
-    }
-    .avatars img.selected {
-      border-color: green;
-    }
-  </style>
-</head>
-<body>
-
-<h1>Викторина</h1>
-
-<div id="join">
-  <input id="name" placeholder="Введите имя" />
-  <div class="avatars" id="avatars"></div>
-  <button id="joinBtn">Начать игру</button>
+<div id="reg-screen">
+    <input id="p-name" placeholder="Ваше имя">
+    <div class="avatars" id="avatar-list"></div>
+    <button onclick="join()">Играть</button>
 </div>
 
-<p id="status"></p>
-
-<div id="questionBlock" style="display:none;">
-  <h2 id="question"></h2>
-  <div id="answers"></div>
+<div id="game-screen" style="display:none">
+    <img id="q-image" src="" style="width:100%; border-radius:10px;">
+    <h2 id="q-text"></h2>
+    <div id="btns"></div>
 </div>
 
 <script>
-  const socket = io();
+    const socket = io();
+    let selectedAvatar = null;
 
-  const avatarsDiv = document.getElementById("avatars");
-  const joinBtn = document.getElementById("joinBtn");
-  const status = document.getElementById("status");
-  const questionBlock = document.getElementById("questionBlock");
-  const questionEl = document.getElementById("question");
-  const answersEl = document.getElementById("answers");
-
-  let selectedAvatar = null;
-
-  // аватары 1–8
-  for (let i = 1; i <= 8; i++) {
-    const img = document.createElement("img");
-    img.src = `/images/avatars/solo/avatar${i}.png`;
-    img.onclick = () => {
-      document.querySelectorAll(".avatars img").forEach(a => a.classList.remove("selected"));
-      img.classList.add("selected");
-      selectedAvatar = img.src;
-    };
-    avatarsDiv.appendChild(img);
-  }
-
-  joinBtn.onclick = () => {
-    const name = document.getElementById("name").value;
-    if (!name || !selectedAvatar) return alert("Введите имя и выберите аватар");
-
-    socket.emit("joinGame", { name, avatar: selectedAvatar });
-    status.textContent = "⏳ Ожидание начала игры…";
-  };
-
-  socket.on("game_started", () => {
-    status.textContent = "🎮 Игра началась!";
-  });
-
-  socket.on("question", (q) => {
-    questionBlock.style.display = "block";
-    questionEl.textContent = q.question;
-    answersEl.innerHTML = "";
-
-    Object.entries(q.options).forEach(([key, text]) => {
-      const btn = document.createElement("button");
-      btn.textContent = `${key}: ${text}`;
-      answersEl.appendChild(btn);
+    socket.on("gameState", (state) => {
+        if (state.status === "REGISTRATION" && !selectedAvatar) {
+            renderAvatars(state.gameMode);
+        }
+        if (state.status === "QUESTION") {
+            showQuestion(state.question);
+        }
     });
-  });
-</script>
 
-</body>
-</html>
+    function renderAvatars(mode) {
+        const list = document.getElementById("avatar-list");
+        list.innerHTML = "";
+        const count = mode === "team" ? 4 : 8;
+        const path = mode === "team" ? "teams/team" : "solo/avatar";
+        
+        for(let i=1; i<=count; i++) {
+            const img = document.createElement("img");
+            img.src = `/images/avatars/${path}${i}.png`;
+            img.onclick = () => {
+                document.querySelectorAll(".avatars img").forEach(el => el.style.border="none");
+                img.style.border = "3px solid gold";
+                selectedAvatar = img.src;
+            };
+            list.appendChild(img);
+        }
+    }
+
+    function join() {
+        const name = document.getElementById("p-name").value;
+        if(name && selectedAvatar) {
+            socket.emit("joinGame", { name, avatar: selectedAvatar });
+        }
+    }
+
+    function showQuestion(q) {
+        document.getElementById("reg-screen").style.display = "none";
+        document.getElementById("game-screen").style.display = "block";
+        document.getElementById("q-image").src = q.image; // Здесь подставляется /images/fatherfrost/question01.png
+        document.getElementById("q-text").innerText = q.text;
+        // Отрисовка кнопок A, B, C, D...
+    }
+</script>
