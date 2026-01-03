@@ -1,51 +1,18 @@
 const socket = io();
 
-const rubric = document.getElementById('rubric');
-const question = document.getElementById('question');
-const answersBlock = document.getElementById('answers');
-const result = document.getElementById('result');
-const image = document.getElementById('image');
+document.getElementById("startBtn").onclick = () => {
+  const name = document.getElementById("name").value;
+  const avatar = document.querySelector("input[name='avatar']:checked")?.value;
 
-let answered = false;
+  if (!name || !avatar) return alert("Введите имя и выберите аватар");
 
-socket.on('new_question', (data) => {
-  answered = false;
-  result.textContent = '';
-  rubric.textContent = data.rubricTitle;
-  question.textContent = data.question;
+  socket.emit("joinGame", { name, avatar });
+};
 
-  if (data.imagePath) {
-    image.src = data.imagePath;
-    image.hidden = false;
-  } else {
-    image.hidden = true;
-  }
-
-  answersBlock.innerHTML = '';
-
-  for (let key in data.options) {
-    const btn = document.createElement('button');
-    btn.textContent = ${key}: ${data.options[key]};
-    btn.onclick = () => sendAnswer(key);
-    answersBlock.appendChild(btn);
-  }
+socket.on("waiting", () => {
+  document.getElementById("status").innerText = "Ожидание начала игры…";
 });
 
-function sendAnswer(answer) {
-  if (answered) return;
-  answered = true;
-  socket.emit('submit_answer', answer);
-}
-
-socket.on('answer_result', (data) => {
-  if (data.correct) {
-    result.textContent = '✅ Правильно!';
-  } else {
-    result.textContent = ❌ Неправильно. Правильный ответ: ${data.correctText};
-  }
-});
-
-socket.on('game_finished', () => {
-  question.textContent = 'Игра завершена 🎉';
-  answersBlock.innerHTML = '';
+socket.on("question", (q) => {
+  document.getElementById("status").innerText = q.question;
 });
