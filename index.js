@@ -1,3 +1,4 @@
+const game = require("./game");
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -23,9 +24,6 @@ app.get("/admin", (req, res) => {
 
 /* ===== GAME STATE ===== */
 let players = [];
-let currentRubric = null;
-let currentQuestionIndex = 0;
-let gameStarted = false;
 
 /* ===== SOCKETS ===== */
 io.on("connection", (socket) => {
@@ -87,4 +85,5 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log("Server started on port", PORT);
 });
+
 
