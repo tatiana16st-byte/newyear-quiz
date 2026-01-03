@@ -83,5 +83,16 @@ server.listen(PORT, () => {
   console.log("Server started on port", PORT);
 });
 
+socket.on("answer", (data) => {
+  const next = game.submitAnswer();
+
+  if (!next) {
+    io.emit("gameFinished");
+    return;
+  }
+
+  io.emit("question", next);
+});
+
 
 
