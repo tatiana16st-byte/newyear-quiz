@@ -4,7 +4,6 @@ const { Server } = require("socket.io");
 const path = require("path");
 
 const rubricsList = require("./data/rubricsList");
-const game = require("./game");
 
 const app = express();
 const server = http.createServer(app);
@@ -22,41 +21,73 @@ app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin.html"));
 });
 
+/* ===== GAME STATE ===== */
+let players = [];
+let usedRubrics = [];
+let currentQuestions = [];
+let currentQuestionIndex = 0;
+
+/* ===== HELPERS ===== */
+function shuffle(array) {
+  return array.sort(() => Math.random() - 0.5);
+}
+
 /* ===== SOCKETS ===== */
 io.on("connection", (socket) => {
   console.log("Подключился:", socket.id);
 
-  /* ===== ИГРОК ===== */
+  /* ===== PLAYER ===== */
   socket.on("joinGame", (player) => {
+    players.push({ ...player, id: socket.id });
     socket.emit("waiting");
+    io.emit("playersUpdate", players);
   });
 
-  /* ===== АДМИН ===== */
+  /* ===== ADMIN START ===== */
   socket.on("adminStart", () => {
-    socket.emit("rubricsList", rubricsList);
+    const availableRubrics = rubricsList.filter(
+      (r) => !usedRubrics.includes(r.id)
+    );
+    socket.emit("rubricsList", availableRubrics);
   });
 
+  /* ===== SELECT RUBRIC ===== */
   socket.on("selectRubric", (rubricId) => {
-    const rubricInfo = rubricsList.find(r => r.id === rubricId);
+    const rubricInfo = rubricsList.find((r) => r.id === rubricId);
     if (!rubricInfo) return;
 
     const rubricData = require(`./data/rubrics/${rubricInfo.file}`);
 
-    game.startGame(rubricData.questions);
+    // берём 5 случайных вопросов
+    currentQuestions = shuffle([...rubricData.questions]).slice(0, 5);
+    currentQuestionIndex = 0;
 
-    io.emit("question", game.getCurrentQuestion());
+    usedRubrics.push(rubricId);
+
+    sendQuestion();
   });
 
-  /* ===== ОТВЕТ ===== */
+  /* ===== ANSWER ===== */
   socket.on("answer", () => {
-    const nextQuestion = game.submitAnswer();
+    currentQuestionIndex++;
 
-    if (!nextQuestion) {
-      io.emit("gameFinished");
-      return;
+    if (currentQuestionIndex < currentQuestions.length) {
+      sendQuestion();
+    } else {
+      io.emit("rubricFinished");
     }
+  });
 
-    io.emit("question", nextQuestion);
+  /* ===== SEND QUESTION ===== */
+  function sendQuestion() {
+    const q = currentQuestions[currentQuestionIndex];
+    if (!q) return;
+
+    io.emit("question", q);
+  }
+
+  socket.on("disconnect", () => {
+    players = players.filter((p) => p.id !== socket.id);
   });
 });
 
